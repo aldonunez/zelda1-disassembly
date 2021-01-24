@@ -1,3 +1,10 @@
+param ( [switch] $NoVerify, [switch] $NoExtract )
+
+# Escalate any statement-terminating error to a script-terminating one.
+trap { break }
+
+. (join-path $PSScriptRoot util.ps1)
+
 function Assemble( $srcPath, $objPath )
 {
 	write-host "Assembling $srcPath"
@@ -12,17 +19,59 @@ function Assemble( $srcPath, $objPath )
 function CompareBinaryFiles( $left, $right )
 {
 	write-host "Comparing $left and $right"
-	cmd /c fc /b $left $right 2> $null > $null
-	return $LastExitCode -eq 0
+	return CompareFiles $left $right
 }
 
-if ( (test-path ext\ca65.exe, ext\ld65.exe, ext\Original.nes) -contains $false )
+function CheckRequirements()
 {
-	throw "Missing external. Ensure ext directory contains: ca65.exe, ld65.exe, Original.nes"
+	$message = "Missing external. Ensure ext directory contains: "
+
+	get-command ext\ca65, ext\ld65 > $null 2>&1
+
+	if ( !$? )
+	{
+		throw ($message + "ca65.exe, ld65.exe")
+	}
+
+	if ( !$NoVerify -and !(test-path ext\Original.nes) )
+	{
+		throw ($message + "Original.nes")
+	}
 }
 
-mkdir obj -ErrorAction ignore
-mkdir bin -ErrorAction ignore
+function ExtractBins()
+{
+	$romPath = resolve-path .\ext\Original.nes
+	$binXmlPath = resolve-path .\src\bins.xml
+	$binRootPath = resolve-path .\src
+
+	$xml = new-object Xml
+	$xml.Load( $binXmlPath )
+
+	$image = [IO.File]::ReadAllBytes( $romPath )
+
+	foreach ( $bin in $xml.Binaries.Binary )
+	{
+		$binPath = join-path $binRootPath $bin.FileName
+		$offset = [int] $bin.Offset + 16
+
+		$buf = new-object byte[] $bin.Length
+		[Array]::Copy( $image, $offset, $buf, 0, $bin.Length )
+
+		[IO.File]::WriteAllBytes( $binPath, $buf )
+	}
+}
+
+
+CheckRequirements
+
+mkdir obj -ErrorAction ignore > $null
+mkdir bin -ErrorAction ignore > $null
+
+if ( !$NoExtract )
+{
+	ExtractBins
+}
 
 $srcPaths = @()
 $objPaths = @()
@@ -52,14 +101,16 @@ echo "Linking"
 if ( $LastExitCode -ne 0 ) { exit }
 
 echo "Combining raw ROM with NES header"
-$out = cmd /c copy /b OriginalNesHeader.bin+bin\Z.bin bin\Z.nes
-if ( $LastExitCode -ne 0 ) { echo $out; exit }
+JoinFiles bin\Z.nes -in OriginalNesHeader.bin, bin\Z.bin
 
-if ( CompareBinaryFiles bin\Z.nes ext\Original.nes )
+if ( !$NoVerify )
 {
-	echo "ROM image is OK"
-}
-else
-{
-	echo "ROM image mismatch"
+	if ( CompareBinaryFiles bin\Z.nes ext\Original.nes )
+	{
+		echo "ROM image is OK"
+	}
+	else
+	{
+		echo "ROM image mismatch"
+	}
 }

@@ -1,0 +1,24 @@
+    .HIBYTES CreditsTextLines+0
+    .HIBYTES CreditsTextLines+9
+    .HIBYTES CreditsTextLines+20
+    .HIBYTES CreditsTextLines+44
+    .HIBYTES CreditsTextLines+68
+    .HIBYTES CreditsTextLines+92
+    .HIBYTES CreditsTextLines+108
+    .HIBYTES CreditsTextLines+132
+    .HIBYTES CreditsTextLines+156
+    .HIBYTES CreditsTextLines+170
+    .HIBYTES CreditsTextLines+184
+    .HIBYTES CreditsTextLines+191
+    .HIBYTES CreditsTextLines+215
+    .HIBYTES CreditsTextLines+241
+    .HIBYTES CreditsTextLines+253
+    .HIBYTES CreditsTextLines+278
+    .HIBYTES CreditsTextLines+294
+    .HIBYTES CreditsTextLines+310
+    .HIBYTES CreditsTextLines+325
+    .HIBYTES CreditsTextLines+346
+    .HIBYTES CreditsTextLines+365
+    .HIBYTES CreditsTextLines+373
+    .HIBYTES CreditsTextLines+398
+

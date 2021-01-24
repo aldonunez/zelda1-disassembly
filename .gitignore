@@ -1,3 +1,4 @@
+src/dat/*.dat
 *.nes
 bak/
 bin/

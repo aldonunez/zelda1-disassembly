@@ -1,0 +1,24 @@
+    .LOBYTES CreditsTextLines+0
+    .LOBYTES CreditsTextLines+9
+    .LOBYTES CreditsTextLines+20
+    .LOBYTES CreditsTextLines+44
+    .LOBYTES CreditsTextLines+68
+    .LOBYTES CreditsTextLines+92
+    .LOBYTES CreditsTextLines+108
+    .LOBYTES CreditsTextLines+132
+    .LOBYTES CreditsTextLines+156
+    .LOBYTES CreditsTextLines+170
+    .LOBYTES CreditsTextLines+184
+    .LOBYTES CreditsTextLines+191
+    .LOBYTES CreditsTextLines+215
+    .LOBYTES CreditsTextLines+241
+    .LOBYTES CreditsTextLines+253
+    .LOBYTES CreditsTextLines+278
+    .LOBYTES CreditsTextLines+294
+    .LOBYTES CreditsTextLines+310
+    .LOBYTES CreditsTextLines+325
+    .LOBYTES CreditsTextLines+346
+    .LOBYTES CreditsTextLines+365
+    .LOBYTES CreditsTextLines+373
+    .LOBYTES CreditsTextLines+398
+

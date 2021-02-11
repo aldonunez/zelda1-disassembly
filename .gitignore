@@ -1,5 +1,7 @@
-src/dat/*.dat
+*.dat
+*.bin
 *.nes
+*.o
 bak/
 bin/
 ext/

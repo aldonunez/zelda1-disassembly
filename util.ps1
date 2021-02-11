@@ -1,7 +1,7 @@
 function JoinFiles( [string] $outputPath, [string[]] $inputPaths )
 {
-	$outFileName = [IO.Path]::GetFileName( $outputPath )
-	$outDir = [IO.Path]::GetDirectoryName( $outputPath )
+	$outFileName = split-path -leaf $outputPath
+	$outDir = split-path -parent $outputPath
 	$outDir = resolve-path $outDir
 
 	$outputPath = join-path $outDir $outFileName

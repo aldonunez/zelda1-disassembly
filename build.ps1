@@ -8,7 +8,7 @@ trap { break }
 function Assemble( $srcPath, $objPath )
 {
 	write-host "Assembling $srcPath"
-	.\ext\ca65 $srcPath -o $objPath
+	.\ext\ca65 $srcPath -o $objPath --bin-include-dir .\bin
 
 	$passed = $LastExitCode -eq 0
 	$script:assemblyPassed = $script:assemblyPassed -and $passed
@@ -43,7 +43,7 @@ function ExtractBins()
 {
 	$romPath = resolve-path .\ext\Original.nes
 	$binXmlPath = resolve-path .\src\bins.xml
-	$binRootPath = resolve-path .\src
+	$binRootPath = resolve-path .\bin
 
 	$xml = new-object Xml
 	$xml.Load( $binXmlPath )
@@ -53,6 +53,9 @@ function ExtractBins()
 	foreach ( $bin in $xml.Binaries.Binary )
 	{
 		$binPath = join-path $binRootPath $bin.FileName
+		$binDir = split-path $binPath
+		mkdir $binDir -ErrorAction ignore > $null
+
 		$offset = [int] $bin.Offset + 16
 
 		$buf = new-object byte[] $bin.Length

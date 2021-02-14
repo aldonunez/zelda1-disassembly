@@ -568,9 +568,8 @@ SetSq0DutyAndSweep:
     STX Sq0Duty_4000
     RTS
 
-; Unknown block
-    .BYTE $20, $03, $9C
-
+EmitSquareNoteWithDutyAndSweep0:
+    JSR SetSq0DutyAndSweep
 ; Params:
 ; A: offset of a note in period table
 ;
@@ -595,9 +594,8 @@ SetSq1DutyAndSweep:
     STY Sq1Sweep_4005
     RTS
 
-; Unknown block
-    .BYTE $20, $21, $9C
-
+EmitSquareNoteWithDutyAndSweep1:
+    JSR SetSq1DutyAndSweep
 ; Params:
 ; A: note ID (offset of note in period table)
 ;
@@ -898,8 +896,7 @@ ApplySq1Effects:
 @HandleTrg:
     LDA NoteOffsetSongTrg
     BNE :+
-; Unknown block
-    .BYTE $4C, $95, $9E
+    JMP @HandleNoise
 
 :
     DEC NoteCounterSongTrg
@@ -962,7 +959,7 @@ ApplySq1Effects:
     LDA #$FF
 @SetTrgLinear:
     STA TrgLinear_4008
-HandleNoise:
+@HandleNoise:
     ; If the song is not demo nor ending, then return.
     ; They don't use noise.
     ;
@@ -1042,8 +1039,14 @@ GetSongNoteLength:
     LDA NoteLengthTable0, Y
     RTS
 
+GetSongNoteLengthWithAbsIndex:
+    AND #$07
+    TAY
+    LDA NoteLengthTable0, Y
+    RTS
+
 ; Unknown block
-    .BYTE $29, $07, $A8, $B9, $D1, $9F, $60, $CB
+    .BYTE $CB
 
 StairsSfxNotes:
     .BYTE $0E, $0E, $4C, $6D, $8C, $CD
@@ -1051,9 +1054,9 @@ StairsSfxNotes:
 ; Unknown block
     .BYTE $FF
 
+; Big-endian 16-bit period values.
+;
 NotePeriodTable:
-    ; Big-endian 16-bit period values.
-    ;
     .BYTE $00, $23, $00, $6A, $03, $27, $00, $97
     .BYTE $00, $00, $02, $F9, $02, $CF, $02, $A6
     .BYTE $02, $80, $02, $5C, $02, $3A, $02, $1A

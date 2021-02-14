@@ -411,8 +411,9 @@ UpdateMenuScrollUp:
     ; Once vertical scroll >= $F0, switch to NT0.
     ;
     STA SwitchNameTablesReq
-    ; TODO: ?
-    ; In UW, write $10 transparent sprites starting from index 0.
+    ; In UW, clear the first $10 sprites. This clears the submenu cursor.
+    ;
+    ; UNKNOWN: But why not do this in OW, too?
     ;
     LDA CurLevel
     BEQ :+
@@ -1403,7 +1404,7 @@ InitMode10:
     BNE :+                      ; If player touched any stairs tile instead of a cave or dungeon entrance, go start updating.
     LDA #$00                    ; TODO: ?
     STA SongEnvelopeSelector
-    LDA #$08                    ; TODO: ?
+    LDA #$08                    ; Stairs effect
     STA EffectRequest
     ; Set the target Y coordinate $10 pixels below current one.
     ;
@@ -1531,13 +1532,13 @@ InitMode4_GoToSub0:
     STA CandleState
     RTS
 
-; TODO: Is also called for modes 9, $B, $C.
-;
 ; Description:
 ; Clears intraroom data.
 ; Set up Link to walk into a room.
 ; Decodes and lays out objects.
 ; Switches from initializing the game mode to updating it.
+;
+; This is called for modes 4, 9, $B, $C.
 ;
 InitMode_EnterRoom:
     JSR DrawSpritesBetweenRooms
@@ -1690,7 +1691,7 @@ InitMode_EnterRoom:
     STA ObjState, X
     STA ObjDir, X
     STA ObjStunTimer, X
-    INC ObjAnimCounter, X       ; TODO: INC?
+    INC ObjAnimCounter, X
     INC ObjMetastate, X         ; By default, objects start in metastate 1 (first cloud state).
     LDA #$20                    ; Set the default speed.
     STA ObjQSpeedFrac, X
@@ -1869,7 +1870,7 @@ SetupTileObjectOW:
 @SetType:
     STA ObjType+11
     JSR ResetRoomTileObjInfo
-    STA ObjState+11             ; TODO: Activate room tile object.
+    STA ObjState+11             ; Activate room tile object.
     RTS
 
 CellarKeeseXs:
@@ -2664,7 +2665,7 @@ UpdateMode11Death_SubA:
     CLC                         ; The second sprite is 8 pixels to the right.
     ADC #$08
     STA Sprites+79
-    DEC DeathTurns              ; TODO: Count down how long you see the spark.
+    DEC DeathTurns              ; Count down how long you see the spark.
     BNE L14D55_Exit             ; If not zero yet, then return.
     LDA #$10                    ; Play "heart taken" tune.
     STA Tune0Request
@@ -2702,15 +2703,15 @@ UpdateMode11Death_SubC:
 :
     RTS
 
+; Three sets of border coordinates:
+; - outer OW
+; - outer UW
+; - inner
+;
+; Within each set, the coordinates are arranged:
+; down, up, right, left
+;
 BorderBounds:
-    ; Three sets of border coordinates:
-    ; - outer OW
-    ; - outer UW
-    ; - inner
-    ;
-    ; Within each set, the coordinates are arranged:
-    ; down, up, right, left
-    ;
     .BYTE $D6, $45, $E9, $07, $C6, $55, $D9, $17
     .BYTE $BE, $54, $D1, $1F
 
@@ -3658,43 +3659,43 @@ Link_ModifyDirInDoorway:
     .BYTE $A9, $F8, $8D, $40, $02, $8D, $44, $02
     .BYTE $60
 
+; To be considered within a doorway, one condition is that
+; Link's perpendicular coordinate ([00]) has to match the doorway's
+; (X=$78 for verticals, Y=$8D for horizontals).
+;
+; See GetPlayerCoordsForDirection.
+;
 DoorwayRequiredCoord:
-    ; To be considered within a doorway, one condition is that
-    ; Link's perpendicular coordinate ([00]) has to match the doorway's
-    ; (X=$78 for verticals, Y=$8D for horizontals).
-    ;
-    ; See GetPlayerCoordsForDirection.
-    ;
     .BYTE $78, $78, $8D, $8D
 
+; Player coordinate must be >= these bounds.
+; Using these bounds; the player will be considered within the
+; bounds of a doorway, if strictly inside or 1 pixel outside.
+;
 DoorwayBoundsMinOver:
-    ; Player coordinate must be >= these bounds.
-    ; Using these bounds; the player will be considered within the
-    ; bounds of a doorway, if strictly inside or 1 pixel outside.
-    ;
     .BYTE $3D, $BD, $00, $CF
 
+; Player coordinate must be < these bounds.
+; Using these bounds; the player will be considered within the
+; bounds of a doorway, if strictly inside or 1 pixel outside.
+;
 DoorwayBoundsMaxOver:
-    ; Player coordinate must be < these bounds.
-    ; Using these bounds; the player will be considered within the
-    ; bounds of a doorway, if strictly inside or 1 pixel outside.
-    ;
     .BYTE $5E, $DE, $21, $F1
 
+; Player coordinate must be >= these bounds.
+; Using these bounds; the player will be considered within the
+; bounds of a doorway, if strictly inside except for 1 or 2 pixels
+; at the edge.
+;
 DoorwayBoundsMinUnder:
-    ; Player coordinate must be >= these bounds.
-    ; Using these bounds; the player will be considered within the
-    ; bounds of a doorway, if strictly inside except for 1 or 2 pixels
-    ; at the edge.
-    ;
     .BYTE $3D, $BF, $00, $D2
 
+; Player coordinate must be < these bounds.
+; Using these bounds; the player will be considered within the
+; bounds of a doorway, if strictly inside except for 1 or 2 pixels
+; at the edge.
+;
 DoorwayBoundsMaxUnder:
-    ; Player coordinate must be < these bounds.
-    ; Using these bounds; the player will be considered within the
-    ; bounds of a doorway, if strictly inside except for 1 or 2 pixels
-    ; at the edge.
-    ;
     .BYTE $5C, $DE, $1F, $F1
 
 ; Params:
@@ -4550,9 +4551,8 @@ FindDoorAttrByDoorBit:
     ASL $01                     ; Shift the single-bit mask left.
     DEC $03
     BPL @LoopDoorBit            ; Go test the next direction.
-; Else return an invalid door attribute.
-; Unknown block
-    .BYTE $A9, $08, $60
+    LDA #$08                    ; Else return an invalid door attribute.
+    RTS
 
 :
     LDA $00
@@ -5234,9 +5234,7 @@ PrepareWriteHorizontalDoorTransferRecords:
 :
     CMP #$01
     BNE :+
-; Unknown block
-    .BYTE $A9, $04
-
+    LDA #$04
 :
     ; Second, subtract 3 from provisional face index.
     ;
@@ -5474,33 +5472,32 @@ FindAndCreatePushBlockObject:
     JSR GetUniqueRoomId
     CMP #$21
     BNE :+
-; Unknown block
-    .BYTE $A9, $40, $85, $7B, $0A, $85, $8F
-
-; Go set the object type and return.
-; Unknown block
-    .BYTE $4C, $2D, $A8
+    LDA #$40
+    STA ObjX+11
+    ASL
+    STA ObjY+11
+    JMP @SetType                ; Go set the object type and return.
 
 :
     ; Look for a block tile in row $A of play area, starting in column 4.
     ;
     LDX #$08
     LDY #$0A
-:
+@LoopColumn:
     LDA PlayAreaColumnAddrs, X
     STA $00
     LDA PlayAreaColumnAddrs+1, X
     STA $01
     LDA ($00), Y
     CMP #$B0
-    BEQ :+
+    BEQ @Found
     INX
     INX
     INX
     INX
     CPX #$34
-    BNE :-
-:
+    BNE @LoopColumn
+@Found:
     ; The block was found in a column with an address at
     ; offset %X in column table. So the column number would
     ; be (%X/2), and X coordinate ((%X/2)*8). That means
@@ -5511,6 +5508,7 @@ FindAndCreatePushBlockObject:
     STA ObjX+11
     LDA #$90                    ; Row $A is at $90 from the top of the screen.
     STA ObjY+11
+@SetType:
     LDA #$68                    ; Block object type
     STA ObjType+11
     RTS
@@ -5687,9 +5685,7 @@ CopyRowToTileBuf:
     ADC #$30
     STA $00
     BCC :+
-; Unknown block
-    .BYTE $E6, $01
-
+    INC $01
 :
     ; Indicate the target VRAM address:
     ; $2100 + (CurRow * $20)
@@ -6089,10 +6085,10 @@ CheckShortcut:
     BEQ @WriteStairs            ; If the room's tile object is a rock, go prepare a stairs square.
     ; Else make the tile object nothing, and write a black tile.
     ; But this branch seems to be unused.
-; Unknown block
-    .BYTE $A9, $00, $8D, $2B, $05, $A9, $0C, $85
-    .BYTE $0D
-
+    LDA #$00
+    STA RoomTileObjType
+    LDA #$0C
+    STA $0D
 @Write:
     JSR WriteSquareOW
 @Exit:
@@ -6638,9 +6634,7 @@ InitModeAOrB_TransferBottomHalfAttrs:
     JSR InitMode3_Sub4_TransferBottomHalfAttrs
     JMP @DisableSprite0Check
 
-; Unknown block
-    .BYTE $E6, $13
-
+    INC GameSubmode
 @DisableSprite0Check:
     LDA #$00
     STA IsSprite0CheckActive
@@ -6874,14 +6868,14 @@ SelectTransferBufAndDecCounter:
 L17295_Exit:
     RTS
 
+; Indexed by reverse direction index.
+;
+; Is used in mapping a direction to a mask for its axis.
+; For example:
+; - right masks off up and down
+; - up masks off left and right
+;
 AxisMasks:
-    ;Indexed by reverse direction index.
-    ;
-    ;Is used in mapping a direction to a mask for its axis.
-    ;For example:
-    ;- right masks off up and down
-    ;- up masks off left and right
-    ;
     .BYTE $0C, $0C, $03, $03
 
 Link_HandleInput:
@@ -7390,7 +7384,7 @@ InitSaveRam:
     STA IsSaveFileBCommitted
     STA IsSaveFileBCommitted+1
     STA IsSaveFileBCommitted+2
-    LDA #$65                    ; TODO: Clear from $6530 to the end of Save RAM.
+    LDA #$65                    ; Clear from $6530 to the end of Save RAM.
     STA $01
     LDA #$30
     STA $00
@@ -7450,8 +7444,9 @@ ClearRam:
 NextRoomIdOffsets:
     .BYTE $F0, $10, $FF, $01
 
-; Unknown block
-    .BYTE $A9, $00, $85, $E7, $60
+    LDA #$00
+    STA $E7
+    RTS
 
 :
     ASL $00                     ; Shift single-bit mask.
@@ -7738,7 +7733,7 @@ CalcOpenDoorwayMask:
     TXA
     PHA                         ; Save direction index.
     TYA
-    PHA                         ; TODO: Save Y=0?
+    PHA                         ; Save Y=0
     JSR GetRoomFlags
     CLC                         ; Clear carry to anticipate a zero AND result, meaning not walkable.
     AND LevelMasks, X           ; AND room flags with single-bit mask for direction.
@@ -7746,7 +7741,7 @@ CalcOpenDoorwayMask:
     SEC                         ; and set carry, so that a 1 will be shifted into the mask.
 :
     PLA
-    TAY                         ; TODO: Restore Y=0.
+    TAY                         ; Restore Y=0.
     PLA
     TAX                         ; Restore direction index in X.
 @ShiftIntoMask:
@@ -7778,9 +7773,18 @@ AddDoorFlagsToCurOpenedDoors:
     BPL @LoopDoorBit
     RTS
 
-; Unknown block
-    .BYTE $A5, $EB, $48, $29, $0F, $A8, $68, $4A
-    .BYTE $4A, $4A, $4A, $AA, $60
+SplitRoomId:
+    LDA RoomId
+    PHA
+    AND #$0F
+    TAY
+    PLA
+    LSR
+    LSR
+    LSR
+    LSR
+    TAX
+    RTS
 
 ; Params:
 ; Y: room ID
@@ -7958,9 +7962,7 @@ UpdateSubmenuSelection:
     LDY #$07
     LDA Items, Y
     BEQ @DrawCursor
-; Unknown block
-    .BYTE $8C, $56, $06
-
+    STY SelectedItemSlot
 @DrawCursor:
     ; Look up the X coordinate for the selected item slot.
     ; Set it for the left cursor sprite.
@@ -8110,9 +8112,8 @@ CheckLetter:
 :
     LDA Potion
     BEQ SetSlotFound            ; If there's no potion, then go set SelectedItemSlot to the letter slot.
-; Unknown block
-    .BYTE $A0, $07, $D0, $D2
-
+    LDY #$07
+    BNE SetSlotFound
 DrawItemInInventoryWithX:
     ; [$00]: X
     ; [$01]: Y

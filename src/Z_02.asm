@@ -214,7 +214,7 @@ UpdateMode0Demo_Sub0:
     LDA ButtonsPressed          ; If Start is not pressed,
     AND #$10
     BEQ Exit                    ; then return.
-    STA TransferredDemoPatterns ;TODO: Else, store $10 in TransferredDemoPatterns. Why?
+    STA TransferredDemoPatterns ; Else, store $10, because it's convenient and not $A5.
     LDA #$00
     STA SongRequest
     JSR SilenceAllSound
@@ -356,7 +356,6 @@ InitialTitleSprites:
     .BYTE $67, $A0, $03, $80, $67, $A0, $03, $88
 
 DemoLineAttrs:
-; TODO: How long?
     .BYTE $80, $00, $00, $00, $00, $00, $00, $00
     .BYTE $40, $80, $80, $00, $60, $00, $00, $00
     .BYTE $40, $80, $00, $00, $60, $00, $00, $00
@@ -711,7 +710,7 @@ ProcessDemoLineAttrs:
     STA DynTileBuf+38
     LDA #$FF
     STA DynTileBuf+39
-    INC $0416                   ; TODO: $416?
+    INC $0416                   ; UNKNOWN: It doesn't seem to be used.
     LDA DemoLineAttrVramAddrLo  ; The next attributes go 8 bytes farther.
     CLC
     ADC #$08
@@ -803,7 +802,7 @@ ProcessDemoLineItems:
     STA ObjX, X
     STA ObjX+1, X
     LDA #$00
-    STA $0430                   ; TODO: $430?
+    STA $0430                   ; UNKNOWN: It doesn't seem to be used.
 @IncRow:
     INC DemoItemRow
     RTS
@@ -1012,7 +1011,9 @@ UpdateWaterfallAnimation:
     STA TitleWaveYs+1
     LDA #$D8
     STA TitleWaveYs+2
-    ; TODO: Are these used?
+    ; UNKNOWN:
+    ; These don't seem to be used in the demo.
+    ; Maybe the waterfall used to be bigger?
     ;
     LDA #$C0
     STA TitleWaveYs+3
@@ -1678,8 +1679,8 @@ ModeE_ResetVariables:
     RTS
 
 DeleteSlot:
-    LDA #$08
-    STA SampleRequest           ; TODO: ?
+    LDA #$08                    ; "Hurt" sound effect
+    STA SampleRequest
     LDY CurSaveSlot
     LDX SlotToBlankNameTransferBufEndOffset, Y
     ; Copy the appropriate transfer buf of a blank name for
@@ -1850,7 +1851,7 @@ CycleCharBoardCursorY:
     LDY #$00
     LDA ObjY+1                  ; Move the char board cursor Y one spot in given direction.
     CLC
-    ADC ModeE_CharBoardYOffsetsAndBounds, X    ; TODO: Add $10 or -$10 ($F0), depending on X passed in (0 or 3).
+    ADC ModeE_CharBoardYOffsetsAndBounds, X    ; Add $10 or -$10 ($F0), depending on X passed in (0 or 3).
     STA ObjY+1
     INX                         ; Look at boundaries.
     CMP ModeE_CharBoardYOffsetsAndBounds, X
@@ -2790,7 +2791,7 @@ UpdateModeDSave_Sub0:
     JSR FetchFileBAddressSet
     JSR FormatFileB
     JSR FetchFileBAddressSet
-    JSR FetchFileAAddressSet    ; TODO: I think this is called only for $067F put in [$0E:0F].
+    JSR FetchFileAAddressSet    ; This seems to be called only for $067F put in [$0E:0F].
     LDY #$27                    ; Copy Items block ($28 bytes) from profile to file B.
 @CopyItems:
     LDA Items, Y
@@ -2895,7 +2896,7 @@ CopyFileBToFileA:
     INY
     STA FileAChecksums, Y
     JSR FetchFileBAddressSet
-    JSR FetchFileAAddressSet    ; TODO: This puts $067F in [$0E:0F].
+    JSR FetchFileAAddressSet    ; This puts $067F in [$0E:0F].
     LDY #$27                    ; Copy Items block ($28 bytes) from file B to file A.
 @CopyItems:
     LDA ($C0), Y
@@ -2996,7 +2997,7 @@ StoreSaveSlotHearts:
     STA $0C
     LDA SaveSlotHeartsAddrsHi, Y
     STA $0D
-    LDY #$01                    ; TODO: Copy HeartsValue and HeartsPartial to set B.
+    LDY #$01                    ; Copy HeartsValue and HeartsPartial to set B.
 @CopyHearts:
     LDA HeartValues, Y
     STA ($0C), Y

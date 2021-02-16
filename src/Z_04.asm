@@ -1557,9 +1557,8 @@ Gel_MoveSplitting:
     RTS
 
 Gel_CheckCollisions:
-    ; TODO:
     ; CheckMonsterCollisions calls GetObjectMiddle which
-    ; overwrites [02] and [03]. So, I don't know why these are set here.
+    ; overwrites [02] and [03]. So, these assignments might be redundant.
     ;
     LDA ObjX, X
     STA $02
@@ -2120,9 +2119,12 @@ UpdateMonsterArrow:
     ;
     CMP #$10
     BNE @CheckBounce
-    ; TODO: But is this necessary?
     ; Set the moving direction in [0F].
     ; Then go update the base arrow.
+    ;
+    ; UNKNOWN:
+    ; This doesn't seem to be needed. Removing the assignment
+    ; doesn't affect the movement of the arrow.
     ;
     LDA ObjDir, X
     STA $0F
@@ -2466,8 +2468,9 @@ UpdateTektiteOrBoulder:
     STA ObjTimer, X
 Jumper_AnimateAndCheckCollisions:
     JSR Anim_FetchObjPosForSpriteDescriptor
-    ; TODO: [0D] ?
-    ; [0D] doesn't seem to be used.
+    ; UNKNOWN:
+    ; [0D] doesn't seem to be used. The next place that it's read is in
+    ; DrawObjectWithAnim, but after overwriting it.
     ;
     STA $0D
     ; If the monster is a boulder, then go animate, draw, check collision.
@@ -3480,8 +3483,8 @@ PondFairy_MoveHearts:
     ; Object slot <> 2. If the state of the heart in slot 2 = 0, then
     ; go start over.
     ;
-    ; TODO:
-    ; Is it possible to jump from here? This looks like an infinite loop.
+    ; The first heart -- in slot 2 -- is updated first, and set to state 1.
+    ; So, you can't jump from here.
     ;
     LDA ObjState+2
     BEQ @LoopHeart
@@ -3553,8 +3556,8 @@ PondFairy_MoveHearts:
     BNE @LoopHeart
     RTS
 
-RockPushDirections:
 ; Also used for the gravestone.
+RockPushDirections:
     .BYTE $08, $04
 
 UpdateRockOrGravestone:
@@ -3957,7 +3960,7 @@ UpdateDock:
     JSR Link_EndMoveAndAnimate_Bank4
     PLA                         ; Restore raft object slot.
     TAX
-    ; TODO: Why animate the raft?
+    ; This call seems to be used to put the raft's coordinates in [00], [01].
     ;
     JSR AnimateObjectWalking
     LDA #$00                    ; Normal sprites, palette row 4 (Link).
@@ -4126,7 +4129,10 @@ UpdateWallmaster:
 :
     ; State 0.
     ;
-    ; If Link's object timer is active, then return.
+    ; All wallmasters share ObjTimer[1] to control when they each
+    ; emerge from the walls.
+    ;
+    ; If the timer has not expired, then return.
     ;
     LDA ObjTimer+1
     BNE @Exit
@@ -4230,10 +4236,8 @@ UpdateWallmaster:
     LDA WallmasterDirsAndAttrsLeft, Y
     AND #$0F
     STA ObjDir, X
-    ; TODO: why object 1 timer?
-    ;
-    ; Set object slot 1's timer to $60, this monster's QSpeed to $18,
-    ; and animation counter to 8.
+    ; Wait $60 frames for the next wallmaster. Set this monster's
+    ; QSpeed to $18, and animation counter to 8.
     ;
     LDA #$60
     STA ObjTimer+1
@@ -4761,11 +4765,11 @@ UpdateStalfos:
     RTS
 
 InitMoldorm:
-    ; Loop to make 10 moldrom segments, from 9 to 0, indexed by Y register.
+    ; Loop to make 10 moldorm segments, from 9 to 0, indexed by Y register.
     ; Object slots $A to 1 will be used.
     ;
     LDY #$09
-:
+@LoopSegment:
     ; Start at position ($80, $70).
     ;
     LDA #$80
@@ -4799,7 +4803,7 @@ InitMoldorm:
     ; Bottom of the loop.
     ;
     DEY
-    BPL :-
+    BPL @LoopSegment
     ; Choose a random 8-way direction for the head segments
     ; in slots 4 and 9.
     ;
@@ -4828,7 +4832,7 @@ InitMoldorm:
     STA Flyer_ObjTurns+10
     LDA #$80                    ; The maximum speed for Moldorm is $80.
     STA FlyingMaxSpeedFrac
-    LDA #$08                    ; TODO: Why 8 instead of 10?
+    LDA #$08                    ; 8 instead of 10, because 8 is the max kill count to save.
     STA RoomObjCount
     RTS
 
@@ -7209,12 +7213,11 @@ BlueWizzrobeTeleportOffsetsY:
     .BYTE $00, $00, $00, $00, $01, $01, $01, $00
     .BYTE $FF, $FF, $FF
 
+; Description:
+; This procedure can be called MoveSimple8. But it's only used
+; by blue wizzrobe and Ganon, which move alike.
+;
 BlueWizzrobe_Move:
-    ; TODO:
-    ; Consider calling this function something like MoveSimple8.
-    ; Also, consider deleting the references to BlueWizzrobe in
-    ; teleport offsets above.
-    ;
     ; Index the offsets using the direction value directly.
     ;
     LDY ObjDir, X
@@ -7966,7 +7969,7 @@ UpdateManhandla:
     BCC @Draw
     LDA ObjType+7
     BNE @Draw
-    LDA #$56                    ; TODO: Fireball object type $56
+    LDA #$56                    ; Fireball object type $56 (unblockable)
     JSR ShootFireball
 @Draw:
     JMP Manhandla_Draw
@@ -8163,8 +8166,7 @@ Manhandla_Move:
     ADC Manhandla_ObjFrameAccum, X
     STA Manhandla_ObjFrameAccum, X
     JSR BoundFlyer
-    ; TODO:
-    ; I don't see why this is needed.
+    ; UNKNOWN: It seems that an RTS would be enough.
     ;
     JMP Anim_FetchObjPosForSpriteDescriptor
 
@@ -8483,8 +8485,7 @@ Gohma_CheckCollisions:
     RTS
 
 Gohma_HandleWeaponCollision:
-    ; TODO:
-    ; If hit by an arrow, then set the arrow to spark
+    ; If hit by an arrow, then set the arrow to spark.
     ;
     CPY #$12
     BNE @CheckHitEye
@@ -8511,9 +8512,7 @@ Gohma_HandleWeaponCollision:
     LDA a:ObjDir, Y
     CMP #$08
     BNE @PlayParryTune
-    ; TODO:
-    ;
-    LDA #$02
+    LDA #$02                    ; Boss hit sound effect
     STA SampleRequest
     ; Deal damage and cry out.
     ;
@@ -9542,10 +9541,7 @@ InitLamnola:
     SEC
     SBC #$39
     STA Lamnola_Speed
-    ; TODO:
-    ; Do the heads not count?
-    ;
-    LDA #$08
+    LDA #$08                    ; 8 instead of 10, because 8 is the max kill count to save.
     STA RoomObjCount
     RTS
 
@@ -9606,9 +9602,7 @@ InitGanon:
     ; Set Link's timer to $40 for scene phase 0.
     ;
     STA ObjTimer
-    ; TODO: ?
-    ;
-    LDA #$02
+    LDA #$02                    ; Boss hit sound effect. But here it's more of a shout.
     STA SampleRequest
     LDA #$10                    ; Play Aquamentus/Gleeok/Ganon roar.
     JSR PlaySample
@@ -11932,7 +11926,7 @@ RotateObjectLocation:
     ; If angle >= $10, then the monster is in the top half of circle going left.
     ;
     LDA ObjAngleWhole, X
-    AND #$18                    ; TODO: Why AND with $18?
+    AND #$18                    ; UNKNOWN: Why AND with $18?
     CMP #$10
     BCC @AddToX
     ; Subtract the product's fraction from the X coordinate fraction.

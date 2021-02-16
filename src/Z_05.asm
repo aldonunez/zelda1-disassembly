@@ -95,6 +95,7 @@
 
 .EXPORT AnimateAndDrawLinkBehindBackground
 .EXPORT CalculateNextRoomForDoor
+.EXPORT CalculateNoNextRoom
 .EXPORT ChangePlayMapSquareOW
 .EXPORT CheckBossSoundEffectUW
 .EXPORT CheckDoorway
@@ -1196,8 +1197,8 @@ UpdateMode7Scroll_Sub7:
     STA GameSubmode
     LSR
     STA IsUpdatingMode          ; Reset to initialize the next mode.
-    STA $010C                   ; TODO: [$010C] ?
-    STA $E7                     ; TODO: [$E7] ?
+    STA $010C                   ; UNKNOWN: [$010C] seems to be a variable that's no longer used.
+    STA $E7                     ; UNKNOWN: [E7] seems to be used only for calculating NextRoomId.
     STA IsSprite0CheckActive    ; Reset sprite-0 check, because we finished scrolling.
     LDA #$04                    ; Go to mode 4 submode 1.
     STA GameMode
@@ -1762,16 +1763,16 @@ InitMode_EnterRoom:
     BEQ @SkipObjects
     LDA $02
     BEQ @SkipObjects
-    ; TODO: If object list ID (or call it object template ID?) >= $62,
+    ; If object list ID / object template ID >= $62,
     ; then it refers to a list. Go handle it.
     ;
     CMP #$62
     BCS @PlaceList
-    ; TODO: Object list ID (or call it object template ID) refers to a
+    ; Object list ID / object template ID refers to a
     ; repeated object.
     ;
     ; Set the object type at each element from 1 to Object Count
-    ; to object list ID (or call it object template ID).
+    ; to object template ID.
     ;
     LDX #$00
 :
@@ -1783,8 +1784,7 @@ InitMode_EnterRoom:
     JMP @StoreObjTemplate
 
 @PlaceList:
-    ; TODO: Object list ID (or call it object template ID) refers to a
-    ; list of object types.
+    ; Object list ID / object template ID truly refers to a list of object types.
     ;
     ; Get the index of the list itself by subtracting $62.
     ;
@@ -2092,7 +2092,7 @@ InitMode11_Sub1:
     STA CurRow
     STA ObjState
     LDA #$04                    ; There will be 4 turns starting from down direction.
-    STA DeathTurns
+    STA DeathModeCounter
     STA ObjDir
     INC IsUpdatingMode          ; Start updating.
 SilenceSound:
@@ -2601,7 +2601,7 @@ L14CD7_IncSubmode:
     RTS
 
 UpdateMode11Death_Sub7:
-    LDA DeathTurns
+    LDA DeathModeCounter
     BEQ L14CD7_IncSubmode       ; Once Link has turned enough times, go to the next submode.
     LDA ObjTimer+11
     BNE @DrawLink               ; If timer hasn't expired, only redraw sprites.
@@ -2613,7 +2613,7 @@ UpdateMode11Death_Sub7:
     BCC @CheckOtherDirs         ; If not left, then go check other directions.
     ; Facing left.
     ;
-    DEC DeathTurns
+    DEC DeathModeCounter
     LDA #$04                    ; Face the next direction (down).
 @SetLinkDirAndDraw:
     STA ObjDir
@@ -2639,16 +2639,19 @@ UpdateMode11Death_Sub9:
     LDA #$2C                    ; Cue the transfer of the dead Link (grey) palette row.
     STA TileBufSelector
     LDA #$0F
-    STA DeathTurns              ; TODO: Here [$E5] means more like spark timer.
+    ; In these two submodes, [E5] DeathModeCounter counts down
+    ; how long the spark lasts.
+    ;
+    STA DeathModeCounter
     LDA #$18
     BNE UpdateMode11Death_SetTimerIncSubmode    ; Go set a delay of $17 ($18-1) frames, and advance the submode.
 UpdateMode11Death_SubA:
     LDA ObjTimer+11
     BNE L14D55_Exit             ; Delay until the timer expires, and we can show the spark.
     LDX #$62                    ; The little spark tile.
-    LDA DeathTurns              ; TODO: Here [$E5] means more like spark timer.
+    LDA DeathModeCounter        ; How much time is left for the spark?
     CMP #$06
-    BCS :+                      ; TODO: If DeathTurns >= 6, use little spark tile $62.
+    BCS :+                      ; If counter/spark timer >= 6, use little spark tile $62.
     LDX #$64                    ; Else use the big one.
 :
     LDA ObjY
@@ -2665,7 +2668,7 @@ UpdateMode11Death_SubA:
     CLC                         ; The second sprite is 8 pixels to the right.
     ADC #$08
     STA Sprites+79
-    DEC DeathTurns              ; Count down how long you see the spark.
+    DEC DeathModeCounter        ; Count down how long you see the spark.
     BNE L14D55_Exit             ; If not zero yet, then return.
     LDA #$10                    ; Play "heart taken" tune.
     STA Tune0Request
@@ -2917,8 +2920,8 @@ WieldBoomerang:
     ; Set up the boomerang.
     ; QSpeed = $C0 (3 pixels a frame)
     ;
-    ; TODO:
-    ; Each turning animation frame lasts 3 screen frames.
+    ; The first turning animation frame lasts 3 screen frames, instead of 2.
+    ; Maybe it's to make up for the fact that the first screen frame isn't seen.
     ;
     JSR PlaceWeaponForPlayerState
     LDA #$C0
@@ -3532,7 +3535,7 @@ InitModeC_JumpTable:
     .ADDR InitMode_WalkCave
 
 ModifyObjCountByHistoryOW:
-    ;Look for the room in the history.
+    ; Look for the room in the history.
     ;
     LDY #$05
     LDA RoomId
@@ -4386,8 +4389,8 @@ WallTileList:
     .BYTE $DC, $00, $D8, $CC, $D0, $00, $F5, $DC
     .BYTE $DC, $00, $F5, $DC, $DC, $00
 
-DoorFaceTilesE:
 ; 5 sets of 12 bytes laying out door faces facing E.
+DoorFaceTilesE:
     .BYTE $88, $74, $8A, $24, $87, $87, $75, $89
     .BYTE $24, $8B, $87, $87, $88, $A4, $8A, $A6
     .BYTE $87, $87, $A5, $89, $A7, $8B, $87, $87
@@ -4397,8 +4400,8 @@ DoorFaceTilesE:
     .BYTE $DF, $24, $DF, $92, $F5, $F5, $24, $DF
     .BYTE $93, $DF, $F5, $F5
 
-DoorFaceTilesW:
 ; 5 sets of 12 bytes laying out door faces facing W.
+DoorFaceTilesW:
     .BYTE $82, $82, $83, $24, $85, $76, $82, $82
     .BYTE $24, $84, $77, $86, $82, $82, $83, $A0
     .BYTE $85, $A2, $82, $82, $A1, $84, $A3, $86
@@ -4408,8 +4411,8 @@ DoorFaceTilesW:
     .BYTE $F5, $F5, $DE, $90, $DE, $24, $F5, $F5
     .BYTE $91, $DE, $24, $DE
 
-DoorFaceTilesS:
 ; 5 sets of 12 bytes laying out door faces facing S.
+DoorFaceTilesS:
     .BYTE $7E, $7F, $7D, $76, $24, $7D, $74, $24
     .BYTE $7D, $80, $81, $7D, $7E, $7F, $7D, $9C
     .BYTE $9D, $7D, $9E, $9F, $7D, $80, $81, $7D
@@ -4419,8 +4422,8 @@ DoorFaceTilesS:
     .BYTE $DD, $DD, $F5, $24, $8E, $F5, $24, $8F
     .BYTE $F5, $DD, $DD, $F5
 
-DoorFaceTilesN:
 ; 5 sets of 12 bytes laying out door faces facing N.
+DoorFaceTilesN:
     .BYTE $78, $79, $7A, $78, $24, $77, $78, $24
     .BYTE $75, $78, $7B, $7C, $78, $79, $7A, $78
     .BYTE $98, $99, $78, $9A, $9B, $78, $7B, $7C
@@ -4565,8 +4568,6 @@ ReachedTopWallBottom:
     ; Set up A and X to move top and bottom offsets to the next column.
     ;
     LDA #$13
-    ; TODO: I think that any value >= 4 would work here;
-    ; so that we keep processing the wall tile list.
     STA $06
     LDX #$19
     BNE MoveWallPtrs            ; Go move top and bottom pointers.
@@ -5568,7 +5569,8 @@ L16887_Exit:
 StartFillingHearts:
     ; Start filling hearts, and go to next submode.
     ;
-    ; TODO: why 2?
+    ; UNKNOWN: Why 2? Either way, non-zero works.
+    ;
     LDA #$02
     STA World_IsFillingHearts
 L1688C_IncSubmode:
@@ -5893,6 +5895,10 @@ LayoutRoomOrCaveOW:
 ;
 ; Returns:
 ; A: primary square corresponding to tile object, else argument
+;
+; Tile object primary squares $E9 and $EA are unused; which
+; means that tile object types $66 and $67 are unused.
+; Instead, armos is represented by primary square $C0.
 ;
 ;
 ; Find the index X corresponding to the primary square: $E5  => 0; $EA => 5.
@@ -7444,8 +7450,9 @@ ClearRam:
 NextRoomIdOffsets:
     .BYTE $F0, $10, $FF, $01
 
+CalculateNoNextRoom:
     LDA #$00
-    STA $E7
+    STA $E7                     ; UNKNOWN: Write 0? But CalculateNextRoomForDoor reads [E7] instead.
     RTS
 
 :
@@ -7469,7 +7476,7 @@ CalculateNextRoomForDoor:
     STA $00                     ; [00] holds a single-bit mask to compare
     LDX #$03                    ; Index
 :
-    LDA $E7                     ; Compare argument to single-bit mask.
+    LDA $E7                     ; Compare direction argument to single-bit mask.
     BIT $00
     BEQ :--                     ; If they don't match, go try the next one.
     JSR GetUniqueRoomId
@@ -7486,7 +7493,7 @@ CalculateNextRoomForDoor:
     BPL MaskCurPpuMaskGrayscale ; If the next room ID is invalid, then fall thru, and reload OW.
 EndGameMode12:
     JSR EndGameMode
-    STA $E7                     ; TODO: ?
+    STA $E7                     ; UNKNOWN: Mode 2 loads a level. But it doesn't depend on [E7].
     STA CurLevel                ; Set OW (level 0).
     LDA #$02
     STA GameMode
@@ -8001,8 +8008,8 @@ UpdateSubmenuSelection:
     ;
     ORA #$40
     STA Sprites+34
-    ; TODO:
-    ; If input direction = [EF] item search direction in the previous frame, return.
+    ; Has the input changed? If input direction = [EF] item search
+    ; direction in the previous frame, then return.
     ;
     LDA ObjInputDir
     CMP $EF

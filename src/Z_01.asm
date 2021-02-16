@@ -2031,7 +2031,7 @@ CheckTileObjectsBlocking:
     BEQ @Found
     CMP #$65                    ; Gravestone
     BEQ @Found
-    CMP #$66                    ; TODO: Armos1?
+    CMP #$66                    ; Armos1. But it seems to be unused, along with Armos2 ($67).
     BNE @NextTileObj            ; If it doesn't match any, go check the next object.
 @Found:
     LDA ObjState, X
@@ -3239,7 +3239,7 @@ FormatHeartsInTextBuf:
     CMP #$80
     BCS @EmitFullHeart          ; If partial heart at least half full, go emit a full heart tile.
     LDA #$00
-    STA $0529                   ; TODO: else, clear [$0529]
+    STA ForceSwordShot          ; else, clear [$0529]
     LDA #$65                    ; and use a half heart tile.
     BNE @EmitChar
 @EmitEmptyHeart:
@@ -5190,8 +5190,8 @@ Anim_WriteSpritePairNotFlashing:
     LDX $08                     ; Put the object index in X again.
     RTS
 
-Anim_ItemFrameOffsets:
 ; Maps an item slot to the offset of its first frame in ItemFrameTiles heap.
+Anim_ItemFrameOffsets:
     .BYTE $00, $03, $07, $0A, $0B, $0C, $0D, $0E
     .BYTE $0F, $11, $12, $13, $14, $15, $16, $17
     .BYTE $18, $17, $18, $17, $19, $1B, $1C, $1D
@@ -5206,13 +5206,14 @@ Anim_ItemFrameTiles:
     .BYTE $6E, $F2, $36, $38, $3A, $3C, $56, $48
     .BYTE $78, $20, $82, $7A, $7C, $30, $64, $62
 
+; Params:
+; A: sprite attributes
+; X: cycle sprite index / object index
+; Y: item slot
+; [00]: X
+; [01]: Y
+;
 Anim_WriteStaticItemSpritesWithAttributes:
-    ; A: sprite attributes
-    ; X: cycle sprite index / object index
-    ; Y: item slot
-    ; [00]: X
-    ; [01]: Y
-    ;
     JSR Anim_SetSpriteDescriptorAttributes
     LDA #$00
     STA $0F                     ; Reset horizontal flipping.
@@ -6450,8 +6451,8 @@ DoObjectsCollideWithThresholds:
 ;       else weapon slot (attacker)
 ; [09]: damage type,
 ;       only if a monster is defending
-; TODO:
-; [0B]: direction
+; [0B]: direction,
+;       only if a monster is defending
 ;
 ; Only monsters (and fire) call this routine.
 ;
@@ -6513,9 +6514,9 @@ BeginShove:
     ; For monsters defending, this won't matter. For Link with grid
     ; offset = 0, I believe the result will be arbitrary.
     ;
-    ; TODO:
-    ; Is [0B] always set if Link's grid offset = 0?
-    ; It doesn't seem to be if candle fire attacks him.
+    ; UNKNOWN:
+    ; [0B] isn't always set, ifLink's grid offset = 0.
+    ; For example, if fire attacks him.
     ;
     LDA $0B
     CMP #$04
@@ -6605,7 +6606,7 @@ BeginShove:
     ; If the monster's attribute "reverse after hit Link" is set, then
     ; combine the shove direction with $40.
     ;
-    ; TODO:
+    ; UNKNOWN:
     ; But the shoving routing doesn't read this flag.
     ;
     LDA ObjAttr, X

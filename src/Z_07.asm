@@ -196,6 +196,7 @@
 
 .IMPORT AnimateAndDrawLinkBehindBackground
 .IMPORT CalculateNextRoomForDoor
+.IMPORT CalculateNoNextRoom
 .IMPORT ChangePlayMapSquareOW
 .IMPORT CheckBossSoundEffectUW
 .IMPORT CheckDoorway
@@ -561,10 +562,12 @@ ClearNameTable:
     STA PpuAddr_2006
     LDY #$00
     STY PpuAddr_2006
-    LDX #$04                    ; Fill one nametable with the tile.
+    ; Fill one nametable with the tile.
+    ;
+    LDX #$04
     CMP #$20
     BCS :+
-    LDX $02                     ; TODO: ???
+    LDX $02                     ; UNKNOWN: Unused. Even so, it wouldn't make sense.
 :
     LDY #$00
     LDA $01
@@ -574,7 +577,9 @@ ClearNameTable:
     BNE @LoopTile
     DEX
     BNE @LoopTile
-    LDY $02                     ; Fill the related attributes with the attribute byte.
+    ; Fill the related attributes with the attribute byte.
+    ;
+    LDY $02
     LDA $00
     CMP #$20
     BCC @RestoreX
@@ -727,18 +732,18 @@ CalculateNextRoom:
     JSR FindDoorAttrByDoorBit
     LDY $01                     ; The same as [02].
 CalculateNextRoom_TableJump:
-    STY $E7                     ; TODO: Set [E7] to a door bit/direction bit.
+    STY $E7                     ; Set [E7] to a door bit/direction.
     JSR TableJump               ; A holds the door attribute.
 CalculateNextRoom_JumpTable:
     .ADDR CalculateNextRoomForDoor
-    .ADDR $B517
+    .ADDR CalculateNoNextRoom
     .ADDR CalculateNextRoomForDoor
     .ADDR CalculateNextRoomForDoor
     .ADDR CalculateNextRoomForDoor
     .ADDR CalculateNextRoomForDoor
     .ADDR CalculateNextRoomForDoor
     .ADDR CalculateNextRoomForDoor
-    .ADDR $B517
+    .ADDR CalculateNoNextRoom
 
 CalculateNextRoomOW:
     LDY ObjDir                  ; Use player's direction bit.
@@ -1185,8 +1190,7 @@ ChangeTileObjTiles:
     ; Change the tiles in the play area map.
     ;
     JSR ChangePlayMapSquareOW
-    ; TODO: ?
-    ; If [F7] is set, switch to bank 4, and reset [F7].
+    ; Switch to bank 4, if requested.
     ;
     LDA ReturnToBank4
     BEQ :+
@@ -1382,17 +1386,12 @@ InitMode3_Sub0:
 ; Returns:
 ; A: 0
 ;
-; TODO: Also resets [0529].
+; Also resets [0529].
 ;
 ClearRoomHistory:
     LDY #$05
     LDA #$00
-    ; TODO: [$0529]?
-    ; From Loz/ItemObj.cpp:
-    ;                // The original game skips checking hearts, and shoots, if [$529] is set.
-    ;                // But, I haven't found any code that sets it.
-    ;
-    STA $0529
+    STA ForceSwordShot
 @Loop:
     ; Clear the room history.
     ;
@@ -2506,12 +2505,7 @@ WieldFlute:
     ;
     LDA SecretColorCycle
     BNE @Exit
-    ; TODO:
-    ; Look for an empty slot from 8 to 0 (?!).
-    ;
-    ; TODO:
-    ; Does it ever get to 0? Would it work? Would an object in that
-    ; slot be updated?
+    ; Look for an empty slot from 9 to 1.
     ;
     LDY #$09
 @FindEmptySlot:
@@ -3966,12 +3960,8 @@ CheckState20:
     ; If it hasn't reached 0, then go draw and check for collision
     ; (with Link, if this is a monster's boomerang).
     ;
-    ; TODO: Why state $28?
-    ; I thought that it was set to $28, so that the animation frame cycle will
-    ; start over again when spinning.
-    ; But when animation counter reaches 0, state will be set to $40.
-    ; If the counter hasn't reached 0, then I don't *think* that
-    ; any drawing code depends on the minor state.
+    ; Minor state 8 selects the frame image and base sprite attribute
+    ; for the spark.
     ;
     LDA #$28
     STA ObjState, X
@@ -4260,16 +4250,19 @@ CalcBoomerangFrame:
     TYA
     LDA BoomerangBaseSpriteAttrCycle, Y
     STA $04
-    ; TODO: ?
-    ; If base sprite attribute in [04] = 8, then leave [04] as it is.
+    ; If base sprite attribute in [04] = 8, then leave [04] as is.
     ; Else add the item value of the magic boomerang.
     ;
-    ; But none of the values in the base sprite attributes array is 8.
-    ;
-    ; As far I can tell, the magic boomerang's item value (0 or 1) in
-    ; the inventory will always be added to the base sprite attribute.
-    ;
+    ; If not sparking, then the magic boomerang's item value (0 or 1)
+    ; in the inventory will be added to the base sprite attribute.
     ; So, palette row 4 or 5 will be chosen.
+    ;
+    ; If sparking, then base sprite attribute 1 from element 8 is used.
+    ; Adding the inventory value results in palette row 4 or 5.
+    ;
+    ; None of the values in the base sprite attributes array is 8.
+    ; So, this branch will never be taken. Maybe this is left over from
+    ; development.
     ;
     LDY #$00
     CMP #$08
@@ -4590,9 +4583,9 @@ MakeSwordShot:
     BNE L1F854_Exit
     ; If [0529] is set, go activate a sword shot regardless of hearts.
     ;
-    ; TODO: But is this used?
+    ; UNKNOWN: But I haven't found any code that sets it.
     ;
-    LDA $0529
+    LDA ForceSwordShot
     BNE @SetUp
     ; If full hearts <> (heart containers - 1), return.
     ;

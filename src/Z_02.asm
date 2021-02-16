@@ -2138,7 +2138,7 @@ UpdateMode0Demo_Sub1:
     ;   If file A's static markers are wrong or file is invalid, then
     ;     Format file A
     ;
-    ; TODO: This is also mode 1 submode 0 init.
+    ; This is also mode 1 submode 0 init.
     ;
     JSR TurnOffAllVideo
     LDA #$00                    ; Reset CurSaveSlot.
@@ -2362,9 +2362,9 @@ CalculateFileBChecksum:
     BPL @SumWorldFlags
     LDA ($C6), Y                ; Add IsSaveSlotActive byte to [$CF:CE].
     JSR AddAToCFCE
-    LDA ($C8), Y                ; Add DeathCount byte to [$CF:CE].
+    LDA ($C8), Y                ; TODO: Add byte at [[$C8:C9]] to [$CF:CE].
     JSR AddAToCFCE
-    LDA ($CA), Y                ; TODO: Add byte at [[$CA:CB]] to [$CF:CE].
+    LDA ($CA), Y                ; Add DeathCount byte to [$CF:CE].
     JSR AddAToCFCE
     LDA ($CC), Y                ; Add byte QuestNumber to [$CF:CE].
 AddAToCFCE:
@@ -2446,14 +2446,14 @@ InitMode1_Sub1:
     TAX
     CPX #$0C
     BCC @LoopSlot               ; 3 times.
-    JSR ResetRoomTileObjInfo    ; TODO: ?
+    JSR ResetRoomTileObjInfo    ; UNKNOWN: Why now?
     LDA #$12                    ; Cue transfer of menu palettes.
     STA TileBufSelector
     INC GameSubmode
     JSR TurnOffVideoAndClearArtifacts
     LDY #$04
     LDA #$00
-    STA $0529                   ; TODO: $529?
+    STA ForceSwordShot          ; UNKNOWN: Why now?
 :
     STA RoomHistory, Y
     DEY

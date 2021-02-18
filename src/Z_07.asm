@@ -211,7 +211,7 @@
 .IMPORT DrawLinkBetweenRooms
 .IMPORT FetchTileMapAddr
 .IMPORT FindAndSelectOccupiedItemSlot
-.IMPORT FindDoorAttrByDoorBit
+.IMPORT FindDoorTypeByDoorBit
 .IMPORT FindNextEdgeSpawnCell
 .IMPORT HasCompass
 .IMPORT InitMode10
@@ -723,17 +723,17 @@ UpdateTriforcePositionMarker:
 CalculateNextRoom:
     LDY CurLevel
     BEQ CalculateNextRoomOW     ; If in OW, all directions are open.
-    ; Look up door attribute for player's direction.
+    ; Look up door type for player's direction.
     ;
     LDA ObjDir
     STA $02
     LDA #$05
     JSR SwitchBank
-    JSR FindDoorAttrByDoorBit
+    JSR FindDoorTypeByDoorBit
     LDY $01                     ; The same as [02].
 CalculateNextRoom_TableJump:
     STY $E7                     ; Set [E7] to a door bit/direction.
-    JSR TableJump               ; A holds the door attribute.
+    JSR TableJump               ; A holds the door type.
 CalculateNextRoom_JumpTable:
     .ADDR CalculateNextRoomForDoor
     .ADDR CalculateNoNextRoom
@@ -747,7 +747,7 @@ CalculateNextRoom_JumpTable:
 
 CalculateNextRoomOW:
     LDY ObjDir                  ; Use player's direction bit.
-    LDA #$00                    ; Use "open" door attribute.
+    LDA #$00                    ; Use "open" door type.
     BEQ CalculateNextRoom_TableJump
 LevelMasks:
     .BYTE $01, $02, $04, $08, $10, $20, $40, $80
@@ -2048,8 +2048,6 @@ UpdatePlayer:
     AND #$C0
     CMP #$40
     BEQ L1EDEA_Exit
-    ; TODO:
-    ;
     ; If Link is paralyzed (by a like-like), then
     ; reset input direction.
     ;
@@ -4850,7 +4848,7 @@ Bomb_CheckState4:
     ;
     LDA #$05
     JSR SwitchBank
-    JSR FindDoorAttrByDoorBit
+    JSR FindDoorTypeByDoorBit
     CMP #$04
     BNE DrawBomb
     ; Trigger this bombable wall to open.

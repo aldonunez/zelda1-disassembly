@@ -111,7 +111,7 @@
 .EXPORT DrawLinkBetweenRooms
 .EXPORT FetchTileMapAddr
 .EXPORT FindAndSelectOccupiedItemSlot
-.EXPORT FindDoorAttrByDoorBit
+.EXPORT FindDoorTypeByDoorBit
 .EXPORT FindNextEdgeSpawnCell
 .EXPORT HasCompass
 .EXPORT InitMode_EnterRoom
@@ -2163,11 +2163,11 @@ CheckShutters:
     RTS
 
 @TriggerIfShutter:
-    ; Pass the direction bit as an argument to get the door attribute.
+    ; Pass the direction bit as an argument to get the door type.
     ;
     LDA $0E
     STA $02
-    JSR FindDoorAttrByDoorBit   ; TODO: Why not call it door type instead of door attribute?
+    JSR FindDoorTypeByDoorBit
     ; If it's not a shutter, go loop again.
     ;
     CMP #$07
@@ -3819,8 +3819,8 @@ CheckDoorway:
     BNE @Exit
     ; Touch the door in the direction we found.
     ;
-    JSR FindDoorAttrByDoorBit
-    STA $0D                     ; [0D] holds the door attribute.
+    JSR FindDoorTypeByDoorBit
+    STA $0D                     ; [0D] holds the door type.
     JSR TouchDoor               ; Can set [0E] to $FF, if a door blocks the way.
     ; If blocked, then return and leave DoorwayDir as it was.
     ;
@@ -4508,7 +4508,7 @@ ColumnHeapUWCellar:
 ; [02]: bitmask for target door.
 ;
 ; Returns:
-; A: door attribute for desired direction in current room.
+; A: door type for desired direction in current room.
 ; [01]: same as [02] if found; $10 otherwise
 ; [03]: reverse direction index
 ;
@@ -4520,7 +4520,7 @@ ColumnHeapUWCellar:
 ;
 ;
 ; Start with single-bit mask 1.
-FindDoorAttrByDoorBit:
+FindDoorTypeByDoorBit:
     LDA #$01
     STA $01
     LDA #$03                    ; Test 4 directions.
@@ -4544,17 +4544,16 @@ FindDoorAttrByDoorBit:
 :
     LSR $00                     ; Isolate S/E doors, if we jump here.
     LSR $00
-    ; Now [$00] holds isolated door attribute.
-    ;
+    ; Now [$00] holds isolated door type attribute.
     ;
     ; Test mask passed in [$02] with current single-bit mask in [$01].
     LDA $02
     BIT $01
-    BNE :+                      ; If they match, then go return door attribute for current direction.
+    BNE :+                      ; If they match, then go return door type for current direction.
     ASL $01                     ; Shift the single-bit mask left.
     DEC $03
     BPL @LoopDoorBit            ; Go test the next direction.
-    LDA #$08                    ; Else return an invalid door attribute.
+    LDA #$08                    ; Else return an invalid door type.
     RTS
 
 :
@@ -4740,17 +4739,17 @@ L_LayOutDoors_LoopHalves:
     STA $0B                     ; [0B] holds direction index.
     LDA DoorBits, X
     STA $02                     ; [02] holds the direction (bit) for the current door.
-    JSR FindDoorAttrByDoorBit
-    ; Begin looking for the door face for the door attribute.
+    JSR FindDoorTypeByDoorBit
+    ; Begin looking for the door face for the door type.
     ; In general, use the door type as the provisional face;
     ; except turn 4 into 8.
     ;
     CMP #$05
-    BCS @DoneClosedPF           ; If door attribute > 4, go use it as the provisional face.
+    BCS @DoneClosedPF           ; If door type > 4, go use it as the provisional face.
     CMP #$04
-    BNE @ClearFromOpenedMask    ; Door attribute < 4, go process it.
+    BNE @ClearFromOpenedMask    ; Door type < 4, go process it.
     LDA #$08
-    BNE @DoneClosedPF           ; Door attribute = 4, go use 8 as the provisional face.
+    BNE @DoneClosedPF           ; Door type = 4, go use 8 as the provisional face.
 @SetPF9:
     ; We jump here if the door type is bombable and was opened.
     ; Change the provisional door face to value 9, which
@@ -4759,7 +4758,7 @@ L_LayOutDoors_LoopHalves:
     LDA #$09
     BNE @DoneOpenPF
 @ClearFromOpenedMask:
-    ; Door attribute < 4 (open or any wall), clear door bit from
+    ; Door type < 4 (open or any wall), clear door bit from
     ; the mask of opened doors, because this is not a true door.
     ;
     PHA
@@ -4774,10 +4773,10 @@ L_LayOutDoors_LoopHalves:
     BCS @DoneClosedPF
     LDA #$04
 @DoneClosedPF:
-    ; The door attribute (DA) has been mapped to a
+    ; The door type (DT) has been mapped to a
     ; provisional door face value (PF) in %A as follows:
     ;
-    ; DA PF Meaning
+    ; DT PF Meaning
     ; -------------
     ; 0  4  open
     ; 1  1  wall
@@ -4834,7 +4833,7 @@ L_LayOutDoors_LoopHalves:
 @DoneOpenPF:
     ; For opened doors, the provisional door face has become:
     ;
-    ; DA PF Meaning
+    ; DT PF Meaning
     ; -------------
     ; 0  4  open
     ; 1  1  wall
@@ -4852,7 +4851,7 @@ L_LayOutDoors_LoopHalves:
     BEQ :+
     LDX $0B                     ; [0B] direction index
     PHA
-    JSR FindDoorAttrByDoorBit
+    JSR FindDoorTypeByDoorBit
     JSR CalcOpenDoorwayMask
     PLA
 :
@@ -5054,7 +5053,7 @@ UpdateDoors:
     BCS :+
     LDA TriggeredDoorDir
     STA $02
-    JSR FindDoorAttrByDoorBit
+    JSR FindDoorTypeByDoorBit
     CMP #$07
     BEQ :+
     JMP L_ResetDoorCmdAndLayOutDoors
@@ -5157,7 +5156,7 @@ L_ResetDoorCmdAndLayOutDoors:
     ;
     LDA TriggeredDoorDir
     STA $02
-    JSR FindDoorAttrByDoorBit
+    JSR FindDoorTypeByDoorBit
     CMP #$07
     BEQ :+
     ; Else the door is not a shutter.
@@ -5216,7 +5215,7 @@ L_ResetDoorCmdAndLayOutDoors:
 PrepareWriteHorizontalDoorTransferRecords:
     LDA TriggeredDoorDir
     STA $02
-    JSR FindDoorAttrByDoorBit
+    JSR FindDoorTypeByDoorBit
     CMP #$05
     BCC :+
     PHA
@@ -5468,7 +5467,9 @@ FindAndCreatePushBlockObject:
     ; If the unique room ID is $21, then
     ; put the push block object at ($40, $80), and go set the type.
     ;
-    ; TODO: Where is room layout $21 used?
+    ; UNKNOWN:
+    ; UW room layout $21 is the entrance room. But none of them
+    ; have the push block flag set in LevelBlock attributes.
     ;
     JSR GetUniqueRoomId
     CMP #$21
@@ -6448,7 +6449,7 @@ InitMode6:
     LDA CurLevel
     BEQ @SetWalkDistance0
     JSR GetPassedDoorType       ; Get door type in direction we're facing
-    ; If the door attribute is "false wall",
+    ; If the door type is "false wall",
     ; then play the "found secret" tune.
     PHA
     AND #$07
@@ -6497,11 +6498,11 @@ ResetInvObjState:
     BPL :-
     RTS
 
-; Returns door attr in direction Link's facing (mode 6),
+; Returns door type in direction Link's facing (mode 6),
 ; or opposite direction (other modes).
 ;
 ; Returns:
-; A: door attribute
+; A: door type
 ; Y: whether Link is facing an increasing direction (right or down)
 ;
 ;
@@ -6515,7 +6516,7 @@ GetPassedDoorType:
     INY
 :
     STY $0F
-    ; If in mode 6, use Link's direction to get a door attribute.
+    ; If in mode 6, use Link's direction to get a door type.
     ; Else use the opposite direction.
     LDA ObjDir
     LDY GameMode
@@ -6524,7 +6525,7 @@ GetPassedDoorType:
     JSR GetOppositeDir
 :
     STA $02
-    JSR FindDoorAttrByDoorBit
+    JSR FindDoorTypeByDoorBit
     LDY $0F
     RTS
 
@@ -7480,7 +7481,7 @@ CalculateNextRoomForDoor:
     BIT $00
     BEQ :--                     ; If they don't match, go try the next one.
     JSR GetUniqueRoomId
-    STA $04E4                   ; TODO: [$04E4] holds unique room ID.
+    STA $04E4                   ; UNKNOWN: [$04E4] holds room layout. But it's unused.
     LDA NextRoomIdOffsets, X    ; Look up offset used to calculate next room ID from current one.
     CLC
     ADC RoomId
@@ -7695,7 +7696,7 @@ Submenu_WriteScanningMapRoomMark:
     STA $02                     ; [02] holds door direction
     LDX #$03
 :
-    JSR FindDoorAttrByDoorBit
+    JSR FindDoorTypeByDoorBit
     JSR CalcOpenDoorwayMask
     DEX
     LSR $02
@@ -7724,7 +7725,7 @@ Submenu_WriteScanningMapRoomMark:
 ; doorway state bit into OpenDoorwayMask.
 ;
 ; Params:
-; A: door attribute
+; A: door type
 ; X: direction index
 ;
 ; Returns:
@@ -7732,9 +7733,9 @@ Submenu_WriteScanningMapRoomMark:
 ;
 CalcOpenDoorwayMask:
     LDY #$00
-    PHA                         ; Save door attribute.
+    PHA                         ; Save door type.
     CMP #$04
-    BCC @ByDoorType             ; If door attribute < 4 (open or any wall), go shift the appropriate bit.
+    BCC @ByDoorType             ; If door type < 4 (open or any wall), go shift the appropriate bit.
     ; Else we have to find out the walkability from the room flags.
     ;
     TXA
@@ -7756,16 +7757,16 @@ CalcOpenDoorwayMask:
     ROL
     AND #$0F
     STA OpenDoorwayMask, Y
-    PLA                         ; Restore door attribute.
+    PLA                         ; Restore door type.
     RTS
 
 @ByDoorType:
-    ; The door attribute indicates the walkability.
+    ; The door type indicates the walkability.
     ;
     CMP #$00
-    BEQ @ShiftIntoMask          ; If door attribute is "open", carry is set, and go shift a 1 into the mask.
+    BEQ @ShiftIntoMask          ; If door type is "open", carry is set, and go shift a 1 into the mask.
     CLC
-    BCC @ShiftIntoMask          ; Door attribute is a wall, carry is clear, and go shift a 0 into the mask.
+    BCC @ShiftIntoMask          ; Door type is a wall, carry is clear, and go shift a 0 into the mask.
 AddDoorFlagsToCurOpenedDoors:
     JSR GetRoomFlags
     LDX #$03

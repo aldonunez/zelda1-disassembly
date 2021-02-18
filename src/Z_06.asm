@@ -559,7 +559,11 @@ TransferCurTileBuf:
     LDA TransferBufAddrs+1, X
     STA $01
     JSR TransferTileBuf
-    LDA #$3F                    ; TODO: Why put $3F in [$0300]? Is it the maximum size of dynamic transfer buf?
+    ; UNKNOWN:
+    ; $3D is the maximum size of the dynamic transfer buf. Is this
+    ; $3F related? [0300] is only ever written.
+    ;
+    LDA #$3F
     STA $0300
     LDX #$00
     STX TileBufSelector

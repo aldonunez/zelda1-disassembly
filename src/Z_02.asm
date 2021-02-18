@@ -3064,7 +3064,8 @@ UpdateEndGameCurtainEffect:
     LDA ObjX+12
     CMP #$11
     BCS @Exit
-    ; TODO: Why set the timer?
+    ; UNKNOWN: This assignment looks unneeded.
+    ; Nothing looks at this timer until it's set again in update/submode 0.
     ;
     LDA #$80
     STA ObjTimer

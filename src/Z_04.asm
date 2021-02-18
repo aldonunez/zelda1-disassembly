@@ -450,8 +450,9 @@ UpdateGoriya:
     ; Store the truncated grid offset.
     ;
     STA ObjGridOffset, X
-    ; TODO: Which object gets in this state, and when?
-    ; If state = $FF, go try shooting.
+    ; If Link's state = $FF, go try shooting.
+    ;
+    ; UNKNOWN: I don't see how Link can get in this state.
     ;
     LDA ObjState
     CMP #$FF
@@ -2085,11 +2086,9 @@ _TryShooting:
 ;
 _ShootIfWanted2:
     JSR _ShootIfWanted
-    ; TODO:
     ; If succeeded, then set object timer to $80, and decrement [0437][X].
     ;
-    ; TODO:
-    ; What are object timer and [0437] used for?
+    ; UNKNOWN: [0437][X] only ever seems to be decremented.
     ;
     BCC L1083E_Exit
     LDA #$80
@@ -3432,15 +3431,12 @@ PondFairy_HandleOtherStates:
     LDA #$00
     STA ObjState
 @DrawLinkAndHearts:
-    ; TODO: but why, since Link is halted?
-    ;
     ; Reset the input direction, so that Link doesn't animate
     ; when drawing him.
+    ;
     LDY #$00
     STY ObjInputDir
     ; Save and reset Link's state.
-    ;
-    ; TODO: but why, since Link is halted?
     ;
     LDA ObjState
     PHA
@@ -3503,7 +3499,9 @@ PondFairy_MoveHearts:
     ; Set up this heart. Set its state to 1.
     ;
     INC ObjState, X
-    ; TODO: ?
+    ; UNKNOWN: I haven't seen anything depend on the heart's
+    ; direction, let alone this value. Then again, Patra Child,
+    ; which is also orbits, has an assignment like this one.
     ;
     LDA #$80
     STA ObjDir, X
@@ -4739,8 +4737,11 @@ UpdateStalfos:
     ; If failed, then go set the qspeed.
     ;
     BCC @CheckResult
-    ; TODO:
     ; Else set timer to $80, and decrement [0437][X].
+    ;
+    ; UNKNOWN: [0437] only ever seems to be decremented.
+    ; Also, Stalfos doesn't care about the timer. This block seems
+    ; copied and pasted from 8832 ("ShootIfWanted2").
     ;
     LDA #$80
     STA ObjTimer, X
@@ -4881,10 +4882,10 @@ InitDigdogger1:
 
 InitDigdogger2:
     JSR InitDigdogger1
-    ; TODO:
     ; Change object type to $38 (Digdogger1).
     ;
-    ; Probably to simplify a test.
+    ; UNKNOWN:
+    ; Why? Everything seems to work as usual, if you leave it as $39.
     ;
     LDA #$38
     STA ObjType, X
@@ -5189,7 +5190,7 @@ L_Digdogger_AfterFlute:
     BEQ @MakeChildren
     ; Every 8 frames, switch between behaving as a big and little digdogger.
     ;
-    ; TODO:
+    ; UNKNOWN:
     ; But is this possible, given the following?
     ; a. all object timers run concurrently
     ; b. all object updates are paused until the flute timer expires
@@ -6791,7 +6792,8 @@ PolsVoice_IsSquareWalkable:
 ;
 ; Use offset 0 from the hotspot.
 ;
-; TODO: But where is [0F] set?
+; It looks like [0F] is still 0 from when ObjUninitialized was copied
+; to it inside UpdateObject.
 ;
 PolsVoice_GetCollidingTile:
     LDY #$00
@@ -9151,14 +9153,14 @@ Gleeok_CheckCollisions:
     ; This neck died. So, prepare to make a flying head.
     ;
     LDA #$60
-    STA ObjHP, X                ; TODO: I don't see why this is needed, since it won't go in this obj slot.
+    STA ObjHP, X                ; I don't see why this is needed, since it won't go in this obj slot.
     TXA                         ; Save the segment object slot in X.
     PHA
     ; If the segment is not a head, then skip making a flying head.
     ;
-    ; TODO:
     ; But how can we get here in this case, since earlier branches
     ; would have been taken to skip all this for all other segments?
+    ; This might be defensive coding.
     ;
     CPX #$05
     BNE @DestroyNeck
@@ -9945,8 +9947,6 @@ Lamnola_UpdateHead:
     CMP ObjectFirstUnwalkableTile
     BCS @FindNonOpposite
 @Exit:
-    ; TODO: confirm this
-    ;
     ; If there were a room that had lamnolas, and they could get
     ; surrounded on 3 sides, then the loop above would get stuck in
     ; an infinite loop.
@@ -9954,6 +9954,9 @@ Lamnola_UpdateHead:
     ; But, the only room with that configuration has those blocks
     ; blocked off with a push block, which can only be pushed after
     ; all monsters are killed.
+    ;
+    ; I confirmed this by using the memory view to move the lamnolas
+    ; in room $57 of Q1/L9 over the stairs in the middle of the room.
     ;
     RTS
 
@@ -10052,14 +10055,8 @@ Lamnola_Move:
 @Exit:
     RTS
 
-; TODO:
-; Was this intended to be an array of two elements?
-;
-PatraManeuverTime:
-    .BYTE $FF
-
-; Unknown block
-    .BYTE $50
+PatraManeuverTimes:
+    .BYTE $FF, $50
 
 UpdatePatra:
     JSR ControlPatraFlight
@@ -10107,10 +10104,10 @@ UpdatePatra:
     EOR #$01
     STA Patra_ObjManeuverIndex, X
     TYA
-    ; TODO:
-    ; for this to make sense, Y must be 0 or 1. But where is is set?
+    ; Y is only ever 0 at this point, even though there are two elements.
+    ; Maybe the TYA instruction above was supposed to be a TAY.
     ;
-    LDA PatraManeuverTime, Y
+    LDA PatraManeuverTimes, Y
     STA ObjTimer+1, X
 @Exit:
     RTS
@@ -10202,7 +10199,8 @@ UpdatePatraChild:
     ; Go to state 1 to orbit.
     ;
     INC ObjState, X
-    ; TODO: ?
+    ; UNKNOWN: Nothing seems to read or write the direction after this
+    ; -- not even collision detection.
     ;
     LDA #$80
     STA ObjDir, X

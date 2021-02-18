@@ -2179,11 +2179,29 @@ ReplaceAshesPaletteRow:
     LDX CurObjIndex
     RTS
 
-; Unknown block
-    .BYTE $20, $93, $FA, $A9, $0B, $4C, $DF, $77
-    .BYTE $A5, $BF, $F0, $0E, $20, $14, $73, $D0
-    .BYTE $09, $A9, $00, $85, $BF, $A9, $02, $8D
-    .BYTE $02, $06, $60
+; Description:
+; This procedure is the same as DrawAshPile in bank 2 and
+; Ganon_DrawAshes in bank 4.
+;
+Unused_DrawAshes_Bank1:
+    JSR Anim_FetchObjPosForSpriteDescriptor
+    LDA #$0B
+    JMP DrawObjectNotMirrored
+
+; Description:
+; This procedure is the same as Ganon_ActivateRoomItem in bank 4.
+;
+Unused_ActivateRoomItem_Bank1:
+    LDA ObjState+19
+    BEQ :+
+    JSR GetRoomFlagUWItemState
+    BNE :+
+    LDA #$00
+    STA ObjState+19
+    LDA #$02
+    STA Tune1Request
+:
+    RTS
 
 LinkToSquareOffsetsX:
     .BYTE $00, $00, $F0, $10

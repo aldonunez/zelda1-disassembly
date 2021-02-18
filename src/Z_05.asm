@@ -19,6 +19,7 @@
 .IMPORT CheckMazes
 .IMPORT CheckPersonBlocking
 .IMPORT CompareHeartsToContainers
+.IMPORT DrawObjectWithAnimAndSpecificSprites
 .IMPORT FormatStatusBarText
 .IMPORT GetOppositeDir
 .IMPORT GetRoomFlagUWItemState
@@ -3619,11 +3620,29 @@ InitMode9_JumpTable:
     .ADDR InitMode9_EnterCellar
     .ADDR InitMode9_WalkCellar
 
-; Unknown block
-    .BYTE $A0, $00, $F0, $02, $A0, $01, $84, $0C
-    .BYTE $BC, $4F, $03, $C8, $85, $0D, $84, $0E
-    .BYTE $86, $08, $A9, $40, $8D, $43, $03, $A9
-    .BYTE $44, $4C, $04, $78
+; Description:
+; This procedure is the same as DrawObjectNotMirroredOverLink
+; in bank 4.
+;
+Unused_DrawObjectNotMirroredOverLink_Bank5:
+    LDY #$00
+    BEQ Unused_DrawObjectMirroredOverLink_Bank5
+    LDY #$01
+; Description:
+; This procedure is the same as DrawObjectMirroredOverLink
+; in bank 4.
+;
+Unused_DrawObjectMirroredOverLink_Bank5:
+    STY $0C
+    LDY ObjType, X
+    INY
+    STA $0D
+    STY $0E
+    STX $08
+    LDA #$40
+    STA LeftSpriteOffset
+    LDA #$44
+    JMP DrawObjectWithAnimAndSpecificSprites
 
 Link_ModifyDirInDoorway:
     ; In a doorway (UW), you can only move in the direction
@@ -3658,9 +3677,14 @@ Link_ModifyDirInDoorway:
 @Exit:
     RTS
 
-; Unknown block
-    .BYTE $A9, $F8, $8D, $40, $02, $8D, $44, $02
-    .BYTE $60
+; Description:
+; This procedure is the same as HideSpritesOverLink in bank 4.
+;
+Unused_HideSpritesOverLink_Bank5:
+    LDA #$F8
+    STA Sprites+64
+    STA Sprites+68
+    RTS
 
 ; To be considered within a doorway, one condition is that
 ; Link's perpendicular coordinate ([00]) has to match the doorway's

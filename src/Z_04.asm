@@ -203,9 +203,9 @@ _InitMonsterShot_Unknown54:
     STA ObjQSpeedFrac, X
     JMP ResetObjMetastate
 
-; Unknown block
-    .BYTE $A9, $80, $95, $28
-
+Unused_10021:
+    LDA #$80
+    STA ObjTimer, X
 InitWalker:
     ; If the facing direction was already set, then return.
     ;
@@ -266,9 +266,8 @@ UpdateStandingFire:
     LDA ObjType, X
     CMP #$40
     BEQ :+
-; Unknown block
-    .BYTE $A9, $00, $85, $0F
-
+    LDA #$00
+    STA $0F
 :
     LDA #$00                    ; Frame image 0
     JMP DrawObjectNotMirrored
@@ -292,11 +291,16 @@ UpdateCommonWanderer:
     BNE Exit
     JMP Wanderer_TargetPlayer
 
-; Unknown block
-    .BYTE $A9, $70, $BC, $4F, $03, $C0, $05, $F0
-    .BYTE $02, $A9, $A0, $9D, $1F, $04, $B5, $AC
-    .BYTE $30, $0F
-
+Unused_10082:
+    LDA #$70
+    LDY ObjType, X
+    CPY #$05
+    BEQ :+
+    LDA #$A0
+:
+    STA ObjTurnRate, X
+    LDA ObjState, X
+    BMI Exit
 Wanderer_TargetPlayer:
     ; If turn timer <> 0, then decrement it.
     ;
@@ -2254,8 +2258,7 @@ UpdateTektiteOrBoulder:
     ;
     LDA ObjShoveDir, X
     BEQ @CheckStunned
-; Unknown block
-    .BYTE $4C, $B8, $EE
+    JMP Obj_Shove
 
 @DrawAndCheckCollisions:
     JMP Jumper_AnimateAndCheckCollisions
@@ -2962,8 +2965,7 @@ RedLeever_AnimateAndCheckCollisions:
     LDA RedLeeverStateAnimTimes, Y
     JMP Burrower_AnimateDrawAndCheckCollisions
 
-; Unknown block
-    .BYTE $60
+    RTS
 
 UpdateOctorock:
     ; If the monster is a fast octorock, use turn rate $A0.
@@ -5431,9 +5433,7 @@ Digdogger_SlowDown:
     LDA Digdogger_ObjSpeedFrac, X
     CMP #$FF
     BNE :+
-; Unknown block
-    .BYTE $DE, $2C, $04
-
+    DEC Digdogger_ObjSpeedWhole, X
 :
     ; If the 16-bit speed has not reached the 16-bit target speed, then return.
     ;
@@ -8953,9 +8953,7 @@ Gleeok_StretchNeck:
     ;
     CMP GleeokSecondarySegmentLimits
     BCC :+
-; Unknown block
-    .BYTE $C8
-
+    INY
 :
     ; If the absolute V-distance >= primary reference segment distance,
     ; then add 3 to the routine index.
@@ -11880,10 +11878,7 @@ GetObjDir8Index:
     BEQ L133AC_Exit
     DEY
     BPL :-
-; If not found, then use index 0.
-; Unknown block
-    .BYTE $C8
-
+    INY                         ; If not found, then use index 0.
 L133AC_Exit:
     RTS
 
@@ -12029,9 +12024,7 @@ ShiftMultiply:
     ADC $01
     STA $02
     BCC @Next
-; Unknown block
-    .BYTE $E6, $03
-
+    INC $03
 @Next:
     DEY
     BNE @Loop

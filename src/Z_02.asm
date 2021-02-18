@@ -850,10 +850,19 @@ Demo_AnimateObjects:
     BNE @LoopObject
     RTS
 
-; Unknown block
-    .BYTE $A2, $04, $C9, $14, $D0, $02, $A2, $0C
-    .BYTE $DE, $50, $02, $AA, $38, $E9, $04, $AA
-    .BYTE $10, $F6, $60
+Unused_97C5:
+    LDX #$04
+    CMP #$14
+    BNE :+
+    LDX #$0C
+:
+    DEC Sprites+80, X
+    TAX
+    SEC
+    SBC #$04
+    TAX
+    BPL :-
+    RTS
 
 AnimateStationaryFairy:
     JSR Anim_FetchObjPosForSpriteDescriptor

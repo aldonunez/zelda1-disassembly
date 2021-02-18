@@ -2,6 +2,10 @@
 .INCLUDE "CommonVars.inc"
 .INCLUDE "CaveVars.inc"
 
+.IMPORT __BANK_01_CODE_LOAD__
+.IMPORT __BANK_01_CODE_RUN__
+.IMPORT __BANK_01_CODE_RUN_END__
+
 .SEGMENT "BANK_01_00"
 
 
@@ -1566,13 +1570,13 @@ InitUnderworldPerson_DoNothing:
     .BYTE $FF, $FF
 
 CopyCommonCodeToRam:
-    LDA #$00                    ; Source address $A500.
+    LDA #<__BANK_01_CODE_LOAD__ ; Source address $A500.
     STA $00
-    LDA #$A5
+    LDA #>__BANK_01_CODE_LOAD__
     STA $01
-    LDA #$90                    ; Destination address $6C90.
+    LDA #<__BANK_01_CODE_RUN__  ; Destination address $6C90.
     STA $02
-    LDA #$6C
+    LDA #>__BANK_01_CODE_RUN__
     STA $03
     LDY #$00
 @Loop:
@@ -1596,10 +1600,10 @@ CopyCommonCodeToRam:
     LDA $03
     ADC #$00
     STA $03
-    CMP #$7F                    ; Once you reach $7F00, you're done.
+    CMP #>__BANK_01_CODE_RUN_END__    ; Once you reach $7F00, you're done.
     BNE @Loop
     LDA $02
-    CMP #$00
+    CMP #<__BANK_01_CODE_RUN_END__
     BNE @Loop
     RTS
 

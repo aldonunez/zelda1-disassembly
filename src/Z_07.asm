@@ -567,7 +567,9 @@ ClearNameTable:
     LDX #$04
     CMP #$20
     BCS :+
+    ; Begin unverified code 1E5B6
     LDX $02                     ; UNKNOWN: Unused. Even so, it wouldn't make sense.
+    ; End unverified code
 :
     LDY #$00
     LDA $01
@@ -862,8 +864,10 @@ AnimateItemObject:
     JMP DrawItemBySlot
 
 @SetItemValueFF:
+    ; Begin unverified code 1E731
     LDA #$FF                    ; Use item value $FF.
     BNE @SetItemValue
+    ; End unverified code
 ; Params:
 ; X: item slot
 ; Y: item slot
@@ -2304,9 +2308,11 @@ Obj_Shove:
     BNE ResetShoveInfo
     ; Since it's Link, shove in the opposite direction that he's facing.
     ;
+    ; Begin unverified code 1EED3
     LDA ObjDir
     JSR GetOppositeDir
     STA ObjShoveDir
+    ; End unverified code
 @Exit:
     RTS
 
@@ -2854,9 +2860,11 @@ Reverse:
     ; This seems to be unused code triggered by object attribute $10.
     ; But $10 is not used in the object attribute array at 07:FAEF.
     ;
+    ; Begin unverified code 1F110
     JSR ReverseObjDir
     JMP CheckBoundary
 
+    ; End unverified code
 CheckTiles:
     ; The code below applies to Link and other objects.
     ;

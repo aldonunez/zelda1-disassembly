@@ -807,8 +807,10 @@ UpdateCavePersonState_TalkOrShopOrDoorCharge:
     ;
     BEQ @Take
     BCC @Take
+    ; Begin unverified code 490E
     RTS
 
+    ; End unverified code
 @Take:
     JSR SetRoomFlagUWItemState
     LDA CaveItemIds, X
@@ -2090,11 +2092,13 @@ CheckPowerTriforceFanfare:
     RTS
 
 @FillHearts:
+    ; Begin unverified code 6196
     LDA #$02
     STA World_IsFillingHearts
     INC GameSubmode
     RTS
 
+    ; End unverified code
 @EndFanfare:
     ; The fanfare is done.
     ;
@@ -2131,11 +2135,13 @@ GanonColorTriples:
     .BYTE $16
 
 ReplaceGanonBrownPaletteRow:
+    ; Begin unverified code 61CE
     LDY #$02
     BNE :+
 ReplaceGanonBluePaletteRow:
     LDY #$05
     BNE :+
+    ; End unverified code
 ReplaceAshesPaletteRow:
     LDY #$08
 :
@@ -2184,6 +2190,7 @@ ReplaceAshesPaletteRow:
 ; Ganon_DrawAshes in bank 4.
 ;
 Unused_DrawAshes_Bank1:
+    ; Begin unverified code 6200
     JSR Anim_FetchObjPosForSpriteDescriptor
     LDA #$0B
     JMP DrawObjectNotMirrored
@@ -2203,6 +2210,7 @@ Unused_ActivateRoomItem_Bank1:
 :
     RTS
 
+    ; End unverified code
 LinkToSquareOffsetsX:
     .BYTE $00, $00, $F0, $10
 

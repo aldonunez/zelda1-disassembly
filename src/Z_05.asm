@@ -3625,6 +3625,7 @@ InitMode9_JumpTable:
 ; in bank 4.
 ;
 Unused_DrawObjectNotMirroredOverLink_Bank5:
+    ; Begin unverified code 15123
     LDY #$00
     BEQ Unused_DrawObjectMirroredOverLink_Bank5
     LDY #$01
@@ -3644,6 +3645,7 @@ Unused_DrawObjectMirroredOverLink_Bank5:
     LDA #$44
     JMP DrawObjectWithAnimAndSpecificSprites
 
+    ; End unverified code
 Link_ModifyDirInDoorway:
     ; In a doorway (UW), you can only move in the direction
     ; that you entered it or the opposite.
@@ -3681,11 +3683,13 @@ Link_ModifyDirInDoorway:
 ; This procedure is the same as HideSpritesOverLink in bank 4.
 ;
 Unused_HideSpritesOverLink_Bank5:
+    ; Begin unverified code 1515F
     LDA #$F8
     STA Sprites+64
     STA Sprites+68
     RTS
 
+    ; End unverified code
 ; To be considered within a doorway, one condition is that
 ; Link's perpendicular coordinate ([00]) has to match the doorway's
 ; (X=$78 for verticals, Y=$8D for horizontals).
@@ -4577,9 +4581,11 @@ FindDoorTypeByDoorBit:
     ASL $01                     ; Shift the single-bit mask left.
     DEC $03
     BPL @LoopDoorBit            ; Go test the next direction.
+    ; Begin unverified code 1642C
     LDA #$08                    ; Else return an invalid door type.
     RTS
 
+    ; End unverified code
 :
     LDA $00
     AND #$07
@@ -5258,7 +5264,9 @@ PrepareWriteHorizontalDoorTransferRecords:
 :
     CMP #$01
     BNE :+
+    ; Begin unverified code 166CD
     LDA #$04
+    ; End unverified code
 :
     ; Second, subtract 3 from provisional face index.
     ;
@@ -5498,12 +5506,14 @@ FindAndCreatePushBlockObject:
     JSR GetUniqueRoomId
     CMP #$21
     BNE :+
+    ; Begin unverified code 167FE
     LDA #$40
     STA ObjX+11
     ASL
     STA ObjY+11
     JMP @SetType                ; Go set the object type and return.
 
+    ; End unverified code
 :
     ; Look for a block tile in row $A of play area, starting in column 4.
     ;
@@ -5712,7 +5722,9 @@ CopyRowToTileBuf:
     ADC #$30
     STA $00
     BCC :+
+    ; Begin unverified code 16932
     INC $01
+    ; End unverified code
 :
     ; Indicate the target VRAM address:
     ; $2100 + (CurRow * $20)
@@ -6116,10 +6128,12 @@ CheckShortcut:
     BEQ @WriteStairs            ; If the room's tile object is a rock, go prepare a stairs square.
     ; Else make the tile object nothing, and write a black tile.
     ; But this branch seems to be unused.
+    ; Begin unverified code 16BAF
     LDA #$00
     STA RoomTileObjType
     LDA #$0C
     STA $0D
+    ; End unverified code
 @Write:
     JSR WriteSquareOW
 @Exit:
@@ -6665,7 +6679,9 @@ InitModeAOrB_TransferBottomHalfAttrs:
     JSR InitMode3_Sub4_TransferBottomHalfAttrs
     JMP @DisableSprite0Check
 
+    ; Begin unverified code 17179
     INC GameSubmode
+    ; End unverified code
 @DisableSprite0Check:
     LDA #$00
     STA IsSprite0CheckActive
@@ -7476,10 +7492,12 @@ NextRoomIdOffsets:
     .BYTE $F0, $10, $FF, $01
 
 CalculateNoNextRoom:
+    ; Begin unverified code 17517
     LDA #$00
     STA $E7                     ; UNKNOWN: Write 0? But CalculateNextRoomForDoor reads [E7] instead.
     RTS
 
+    ; End unverified code
 :
     ASL $00                     ; Shift single-bit mask.
     DEX
@@ -7806,6 +7824,7 @@ AddDoorFlagsToCurOpenedDoors:
     RTS
 
 SplitRoomId:
+    ; Begin unverified code 17680
     LDA RoomId
     PHA
     AND #$0F
@@ -7818,6 +7837,7 @@ SplitRoomId:
     TAX
     RTS
 
+    ; End unverified code
 ; Params:
 ; Y: room ID
 ;
@@ -7994,7 +8014,9 @@ UpdateSubmenuSelection:
     LDY #$07
     LDA Items, Y
     BEQ @DrawCursor
+    ; Begin unverified code 17764
     STY SelectedItemSlot
+    ; End unverified code
 @DrawCursor:
     ; Look up the X coordinate for the selected item slot.
     ; Set it for the left cursor sprite.
@@ -8144,8 +8166,10 @@ CheckLetter:
 :
     LDA Potion
     BEQ SetSlotFound            ; If there's no potion, then go set SelectedItemSlot to the letter slot.
+    ; Begin unverified code 17818
     LDY #$07
     BNE SetSlotFound
+    ; End unverified code
 DrawItemInInventoryWithX:
     ; [$00]: X
     ; [$01]: Y

@@ -851,6 +851,7 @@ Demo_AnimateObjects:
     RTS
 
 Unused_97C5:
+    ; Begin unverified code 97C5
     LDX #$04
     CMP #$14
     BNE :+
@@ -864,6 +865,7 @@ Unused_97C5:
     BPL :-
     RTS
 
+    ; End unverified code
 AnimateStationaryFairy:
     JSR Anim_FetchObjPosForSpriteDescriptor
     JSR Anim_SetSpriteDescriptorRedPaletteRow
@@ -2886,12 +2888,14 @@ UpdateModeDSave_Sub1:
 @DiscardFileB:
     ; Discard file B, because it couldn't be validated.
     ;
+    ; Begin unverified code A75A
     LDY CurSaveSlot
     LDA #$FF
     STA IsSaveFileBCommitted, Y
     INC GameSubmode
     RTS
 
+    ; End unverified code
 CopyFileBToFileA:
     LDY CurSaveSlot
     LDA #$00                    ; Reset the save file markers.

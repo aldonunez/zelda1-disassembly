@@ -569,7 +569,9 @@ SetSq0DutyAndSweep:
     RTS
 
 EmitSquareNoteWithDutyAndSweep0:
+    ; Begin unverified code 1C0A
     JSR SetSq0DutyAndSweep
+    ; End unverified code
 ; Params:
 ; A: offset of a note in period table
 ;
@@ -595,7 +597,9 @@ SetSq1DutyAndSweep:
     RTS
 
 EmitSquareNoteWithDutyAndSweep1:
+    ; Begin unverified code 1C28
     JSR SetSq1DutyAndSweep
+    ; End unverified code
 ; Params:
 ; A: note ID (offset of note in period table)
 ;
@@ -896,8 +900,10 @@ ApplySq1Effects:
 @HandleTrg:
     LDA NoteOffsetSongTrg
     BNE :+
+    ; Begin unverified code 1E1E
     JMP @HandleNoise
 
+    ; End unverified code
 :
     DEC NoteCounterSongTrg
     BNE @ApplyTrgEffects
@@ -1040,11 +1046,13 @@ GetSongNoteLength:
     RTS
 
 GetSongNoteLengthWithAbsIndex:
+    ; Begin unverified code 1EF1
     AND #$07
     TAY
     LDA NoteLengthTable0, Y
     RTS
 
+    ; End unverified code
 ; Unknown block
     .BYTE $CB
 

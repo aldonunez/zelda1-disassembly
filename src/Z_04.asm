@@ -198,14 +198,18 @@ InitMonsterShot:
     LDA #$C0                    ; QSpeed $C0 (3 pixels a frame)
     BNE :+
 _InitMonsterShot_Unknown54:
+    ; Begin unverified code 10019
     LDA #$E0                    ; QSpeed $E0 (3.5 pixels a frame)
+    ; End unverified code
 :
     STA ObjQSpeedFrac, X
     JMP ResetObjMetastate
 
 Unused_10021:
+    ; Begin unverified code 10021
     LDA #$80
     STA ObjTimer, X
+    ; End unverified code
 InitWalker:
     ; If the facing direction was already set, then return.
     ;
@@ -266,8 +270,10 @@ UpdateStandingFire:
     LDA ObjType, X
     CMP #$40
     BEQ :+
+    ; Begin unverified code 10065
     LDA #$00
     STA $0F
+    ; End unverified code
 :
     LDA #$00                    ; Frame image 0
     JMP DrawObjectNotMirrored
@@ -292,6 +298,7 @@ UpdateCommonWanderer:
     JMP Wanderer_TargetPlayer
 
 Unused_10082:
+    ; Begin unverified code 10082
     LDA #$70
     LDY ObjType, X
     CPY #$05
@@ -301,6 +308,7 @@ Unused_10082:
     STA ObjTurnRate, X
     LDA ObjState, X
     BMI Exit
+    ; End unverified code
 Wanderer_TargetPlayer:
     ; If turn timer <> 0, then decrement it.
     ;
@@ -2137,6 +2145,7 @@ UpdateMonsterArrow:
     ; If the shooter is gone, then reset the arrow's object timer;
     ; so that it flies right away.
     ;
+    ; Begin unverified code 1085C
     LDY ObjRefId, X
     LDA ObjType, Y
     BNE :+
@@ -2144,6 +2153,7 @@ UpdateMonsterArrow:
 :
     JMP DrawArrow
 
+    ; End unverified code
 @UpdateBase:
     JSR UpdateArrowOrBoomerang
     ; If the arrow is no longer flying, then
@@ -2258,8 +2268,10 @@ UpdateTektiteOrBoulder:
     ;
     LDA ObjShoveDir, X
     BEQ @CheckStunned
+    ; Begin unverified code 108FC
     JMP Obj_Shove
 
+    ; End unverified code
 @DrawAndCheckCollisions:
     JMP Jumper_AnimateAndCheckCollisions
 
@@ -2965,8 +2977,10 @@ RedLeever_AnimateAndCheckCollisions:
     LDA RedLeeverStateAnimTimes, Y
     JMP Burrower_AnimateDrawAndCheckCollisions
 
+    ; Begin unverified code 10BFE
     RTS
 
+    ; End unverified code
 UpdateOctorock:
     ; If the monster is a fast octorock, use turn rate $A0.
     ; Else use turn rate $70.
@@ -3678,7 +3692,9 @@ UpdateRockOrGravestone:
     BEQ @ReplaceTiles
     ; Else use an armos tile ($C0). Dead code?
     ;
+    ; Begin unverified code 10EC9
     LDA #$C0
+    ; End unverified code
 @ReplaceTiles:
     ; Change the tiles at the end location.
     ;
@@ -5198,6 +5214,7 @@ L_Digdogger_AfterFlute:
     ; b. all object updates are paused until the flute timer expires
     ; c. the flute timer lasts longer
     ;
+    ; Begin unverified code 1159D
     AND #$07
     BNE :+
     LDA Digdogger_ObjIsChild, X
@@ -5207,6 +5224,7 @@ L_Digdogger_AfterFlute:
 :
     JMP L_Digdogger_DrawAsLittle
 
+    ; End unverified code
 @MakeChildren:
     ; Decrement flute state to 1.
     ;
@@ -5433,7 +5451,9 @@ Digdogger_SlowDown:
     LDA Digdogger_ObjSpeedFrac, X
     CMP #$FF
     BNE :+
+    ; Begin unverified code 116C2
     DEC Digdogger_ObjSpeedWhole, X
+    ; End unverified code
 :
     ; If the 16-bit speed has not reached the 16-bit target speed, then return.
     ;
@@ -8953,7 +8973,9 @@ Gleeok_StretchNeck:
     ;
     CMP GleeokSecondarySegmentLimits
     BCC :+
+    ; Begin unverified code 12658
     INY
+    ; End unverified code
 :
     ; If the absolute V-distance >= primary reference segment distance,
     ; then add 3 to the routine index.
@@ -9038,12 +9060,14 @@ L_Gleeok_ExpandHorizontally:
 Gleeok_ContractSegmentX:
     ; Move toward the next segment horizontally.
     ;
+    ; Begin unverified code 126B5
     LDA ObjX+2, X
     TAY
     INY
     INY
     CMP ObjX+3, X
     BCC L_Gleeok_SetSegmentX
+    ; End unverified code
 L_Gleeok_DecSegmentX:
     DEY
     DEY
@@ -9057,9 +9081,11 @@ Gleeok_ContractSegment:
     ; Randomly, 50% of the time, go move toward the next segment horizontally.
     ; Else go move vertically.
     ;
+    ; Begin unverified code 126C5
     LDA Random
     BPL Gleeok_ContractSegmentX
     BMI Gleeok_ContractSegmentY
+    ; End unverified code
 ; Description:
 ; This block applies to heads and the bottom segment of a neck.
 ; These are drawn with sprites that come first in order, so that
@@ -11878,7 +11904,9 @@ GetObjDir8Index:
     BEQ L133AC_Exit
     DEY
     BPL :-
+    ; Begin unverified code 133AB
     INY                         ; If not found, then use index 0.
+    ; End unverified code
 L133AC_Exit:
     RTS
 
@@ -12024,7 +12052,9 @@ ShiftMultiply:
     ADC $01
     STA $02
     BCC @Next
+    ; Begin unverified code 13453
     INC $03
+    ; End unverified code
 @Next:
     DEY
     BNE @Loop

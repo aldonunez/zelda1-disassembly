@@ -9,6 +9,7 @@
 
 .EXPORT TransferLevelPatternBlocks
 
+
 LevelPatternBlockSrcAddrs:
     .ADDR PatternBlockUWSP127
     .ADDR PatternBlockUWSP127
@@ -65,12 +66,14 @@ TransferLevelPatternBlocks:
     JSR ResetPatternBlockIndex
     LDA CurLevel
     BNE TransferLevelPatternBlocksUW    ; Go handle UW levels.
+
 @LoopBlockOW:
     JSR FetchPatternBlockInfoOW
     JSR TransferPatternBlock_Bank3
     LDA PatternBlockIndex
     CMP #$02                    ; There are two blocks.
     BNE @LoopBlockOW            ; If we haven't transferred the second, then go do so.
+
 ResetPatternBlockIndex:
     LDA #$00
     STA PatternBlockIndex
@@ -82,10 +85,10 @@ TransferLevelPatternBlocksUW:
     LDA PatternBlockIndex
     CMP #$02
     BNE TransferLevelPatternBlocksUW    ; If at block index 1, then go transfer the second block.
+
     ; At this point, we've transferred two common blocks
     ; (BG and sprites). Now UW, transfer bosses and other
     ; specialized sprite patterns.
-    ;
     JSR FetchPatternBlockAddrUWSpecial
     JSR FetchPatternBlockSizeUW
     JSR FetchPatternBlockUWBoss
@@ -153,6 +156,7 @@ FetchPatternBlockSizeUW:
     INX
     LDA PatternBlockSizesUW, X
     STA $03
+
 ; Params:
 ; [$00:01]: source address
 ; [$03:02]: size
@@ -169,11 +173,12 @@ TransferPatternBlock_Bank3:
     LDA PatternBlockPpuAddrs, X
     STA PpuAddr_2006
     LDY #$00                    ; Start copying.
+
 @LoopCopy:
     LDA ($00), Y                ; Transfer 1 byte from source pattern block in ROM to PPU.
     STA PpuData_2007
+
     ; Increment source address.
-    ;
     LDA $00
     CLC
     ADC #$01
@@ -181,8 +186,8 @@ TransferPatternBlock_Bank3:
     LDA $01
     ADC #$00
     STA $01
+
     ; Decrement count.
-    ;
     LDA $03
     SEC
     SBC #$01
@@ -190,8 +195,8 @@ TransferPatternBlock_Bank3:
     LDA $02
     SBC #$00
     STA $02
+
     ; If count is not zero, go copy more.
-    ;
     LDA $02
     BNE @LoopCopy
     LDA $03
@@ -229,8 +234,8 @@ PatternBlockUWSPBoss3468:
 PatternBlockUWSPBoss9:
     .INCBIN "dat/PatternBlockUWSPBoss9.dat"
 
-
 .SEGMENT "BANK_03_ISR"
+
 
 
 
@@ -250,11 +255,10 @@ PatternBlockUWSPBoss9:
     .BYTE $8D, $00, $E0, $4A, $8D, $00, $E0, $4A
     .BYTE $8D, $00, $E0, $4A, $8D, $00, $E0, $60
 
-
 .SEGMENT "BANK_03_VEC"
+
 
 
 
 ; Unknown block
     .BYTE $84, $E4, $50, $BF, $F0, $BF
-

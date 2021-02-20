@@ -21,4 +21,3 @@
     .HIBYTES CreditsTextLines+365
     .HIBYTES CreditsTextLines+373
     .HIBYTES CreditsTextLines+398
-

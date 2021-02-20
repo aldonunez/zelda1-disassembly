@@ -48,6 +48,7 @@
 .EXPORT UpdateUnderworldPersonLifeOrMoney_Full
 .EXPORT UpdateWhirlwind_Full
 
+
 PersonTextAddrs:
     .INCLUDE "dat/PersonTextAddrs.inc"
 
@@ -72,13 +73,12 @@ MoneyGamePermutationEndIndexes:
 
 InitCave:
     ; The person goes at location ($78, $80).
-    ;
     LDA #$78
     LDY #$80
     JSR SetUpCommonCaveObjects
+
     ; If the cave/person does not remember state (give item, door charge),
     ; then go handle other kinds.
-    ;
     LDA ObjType+1
     CMP #$72
     BEQ @TakeType
@@ -88,19 +88,20 @@ InitCave:
     BCS @TakeType
     CMP #$6E
     BCS InitCaveContinue
+
 @TakeType:
     ; Else the cave/person simply does:
     ; - taken:     no person, no text
     ; - not taken: show a person and text
     ;
     ; So, if the item was not taken, then go set up the text.
-    ;
     JSR GetRoomFlagUWItemState
     BEQ InitCaveContinue
+
     ; Otherwise destroy the person object, and let Link continue.
-    ;
     LDA #$00
     STA ObjType+1
+
 UnhaltLink:
     LDA #$00
     STA ObjState
@@ -108,27 +109,26 @@ UnhaltLink:
 
 InitCaveContinue:
     ; Get this cave's index (object type - $6A).
-    ;
     LDA ObjType+1
     SEC
     SBC #$6A
     TAY
+
     ; Get the person text selector by looking up the text selector byte
     ; for this index, and masking it with $3F.
-    ;
     LDA OverworldPersonTextSelectors, Y
     PHA                         ; Save the text selector byte before masking.
     AND #$3F
     STA PersonTextSelector
+
     ; Pop and mask the text selector byte with $C0 to get the
     ; "pay" and "pick up" cave flags and store them in [03].
-    ;
     PLA
     AND #$C0
     STA $03
+
     ; At this point, the Y register still has the cave index.
     ; Multiply it by 3 to get the offset of the first item in a set of 3.
-    ;
     LDA #$FD
 :
     CLC
@@ -136,41 +136,41 @@ InitCaveContinue:
     DEY
     BPL :-
     TAY
+
     ; Loop over the wares from 0 to 2.
-    ;
     LDX #$00
+
 @CopyCaveBytes:
     ; Copy 3 item ID bytes from the Cave level block info.
     ; Item ID's are in the low 6 bits, cave flags are in the high 2 bits.
-    ;
     LDA LevelBlockAttrsE, Y
     STA CaveItemIds, X
+
     ; Copy the cave flags (high 2 bits) of the three items to [00] to [02].
-    ;
     AND #$C0
     STA $00, X
+
     ; Copy 3 prices from the Cave level block info.
-    ;
     LDA LevelBlockAttrsE+60, Y
     STA CavePrices, X
+
     ; Bottom of the wares copying loop.
-    ;
     INY
     INX
     CPX #$03
     BNE @CopyCaveBytes
+
     ; Get the top 2 bits of text selector byte in [03],
     ; shift them to the bottom, and combine them with [00].
-    ;
     LDA $03
     ASL
     ROL
     ROL
     ORA $00
     STA $00
+
     ; Get the top 2 bits of item descriptor 2, shift them right 4 times,
     ; and combine them with [00].
-    ;
     LDA $02
     LSR
     LSR
@@ -178,65 +178,67 @@ InitCaveContinue:
     LSR
     ORA $00
     STA $00
+
     ; Get the top 2 bits of item descriptor 1, shift them right twice,
     ; and combine them with [00] into CaveFlags.
-    ;
     LDA $01
     LSR
     LSR
     ORA $00
     STA CaveFlags
+
     ; The end result is a byte with 8 cave flags.
     ;
     ; If cave flag "money game" is missing, then go finish up,
     ; instead of choosing random amounts for the money game.
-    ;
     AND #$20
     BEQ @ResetTextbox
+
     ; Determine an index randomly with increasing probability,
     ; from 6 to 1. Start with the following test:
     ;
     ;   If $FF < Random, then go use index 6.
-    ;
     LDA #$FF
     LDY #$06
+
 @ChoosePermutation:
     CMP Random+1
     BCC @FoundPermutation
+
     ; If the test fails, then subtract $2B from the reference number.
-    ;
     SEC
     SBC #$2B
     DEY
     BNE @ChoosePermutation
+
 @FoundPermutation:
     ; The index chooses the last offset of a permutation of three indexes.
-    ;
     LDX MoneyGamePermutationEndIndexes, Y
+
     ; Copy the permutation of 3 indexes to [046C] to [046E].
-    ;
     LDY #$02
+
 @CopyPermutation:
     LDA MoneyGamePermutations, X
     STA $046C, Y
     DEX
     DEY
     BPL @CopyPermutation
+
     ; With the first bit of another random number, choose 10 or 40
     ; to put in [046F]. This is a random amount to lose.
-    ;
     LDA Random+2
     AND #$01
     TAY
     LDA MoneyGameLossAmounts, Y
     STA $046F
+
     ; Put 10 in [0470]. This is a fixed amount to lose.
-    ;
     LDA #$0A
     STA $0470
+
     ; With a different bit of the second random number,
     ; choose 20 or 50 to put in [0471]. This is an amount to win.
-    ;
     LDY #$14
     LDA Random+2
     AND #$02
@@ -244,24 +246,25 @@ InitCaveContinue:
     LDY #$32
 :
     STY $0471
+
     ; The 3 amounts are now in [046F] to [0471].
     ; Reference these amounts using the permutation of indexes
     ; in [046C] to [046E]; and copy them to [0448] to [044A].
-    ;
     LDX #$02
+
 @ArrangeAmounts:
     LDY $046C, X
     LDA $046F, Y
     STA MoneyGameAmounts, X
     DEX
     BPL @ArrangeAmounts
+
 @ResetTextbox:
     ; Reset the current character index.
-    ;
     LDA #$00
     STA PersonTextIndex
+
     ; Point to the front of the first textbox line.
-    ;
     LDA TextboxLineAddrsLo+2
     STA PersonTextPtr
     RTS
@@ -279,12 +282,12 @@ SetUpCommonCaveObjects:
     STA ObjHP, X
     LDA #$81
     STA ObjAttr, X
+
     ; Halt Link.
-    ;
     LDA #$40
     STA ObjState
+
     ; Set up the two bonfires.
-    ;
     LDA #$40
     STA ObjType+2
     STA ObjType+3
@@ -304,7 +307,6 @@ PriceListTemplateTransferBuf:
 UpdateCavePerson:
     ; If in state 4, then every other frame skip drawing the person
     ; and items; and go straight to the state code for each kind of cave.
-    ;
     LDA ObjState+1
     CMP #$04
     BNE :+
@@ -313,27 +315,27 @@ UpdateCavePerson:
     BNE @UpdateCavePersonDirect
 :
     JSR DrawCavePerson
+
     ; If the cave type is not $74 medicine shop,
     ; or it is but the letter has not been used, then
     ; go draw items and run the state code.
-    ;
     LDA ObjType+1
     CMP #$74
     BNE @DrawItems
     LDA InvLetter
     CMP #$02
     BEQ @DrawItems
+
     ; If the letter is selected, and B is pressed, then go use the letter.
-    ;
     LDY SelectedItemSlot
     CPY #$0F
     BNE @Unhalt
     LDA ButtonsPressed
     AND #$40
     BNE @UseLetter
+
 @Unhalt:
     ; If Link is halted, then unhalt him.
-    ;
     LDA ObjState
     CMP #$40
     BNE :+
@@ -345,21 +347,23 @@ UpdateCavePerson:
     ; The letter has been used.
     ;
     ; Play the "secret found" tune.
-    ;
     LDA #$04
     STA Tune1Request
+
     ; Set the letter state to used (2).
-    ;
     INC InvLetter
+
     ; Change the selected item slot to the potion's.
-    ;
     LDA #$07
     STA SelectedItemSlot
+
 @DrawItems:
     JSR DrawCaveItems
+
 @UpdateCavePersonDirect:
     LDA ObjState+1
     JSR TableJump
+
 UpdateCavePerson_JumpTable:
     .ADDR UpdateCavePersonState_TransferPrices
     .ADDR UpdatePersonState_Textbox
@@ -373,16 +377,15 @@ UpdateCavePerson_JumpTable:
 
 DrawCavePerson:
     JSR Anim_FetchObjPosForSpriteDescriptor
+
     ; If the cave/person type >= $7B, then the visual is a moblin.
     ; So, go draw not mirrored.
-    ;
     LDY ObjType+1
     CPY #$7B
     BCS :+
-    ; Else the old man, old woman, and shopkeeper are all mirrored.
-    ;
-    JMP DrawObjectMirrored
 
+    ; Else the old man, old woman, and shopkeeper are all mirrored.
+    JMP DrawObjectMirrored
 :
     JMP DrawObjectNotMirrored
 
@@ -392,47 +395,47 @@ CaveWareXs:
 DrawCaveItems:
     ; If the cave flags do not call for showing items, then
     ; go see about showing prices.
-    ;
     LDA CaveFlags
     AND #$04                    ; Cave flag: Show items
     BEQ @ShowPriceRupee
+
     ; Loop over the wares to draw, from 2 to 0, indexed by [0421].
-    ;
     LDA #$02
     STA $0421
+
 @LoopWare:
     LDX $0421
+
     ; Look up and set the X coordinate for the current item.
-    ;
     LDA CaveWareXs, X
     STA ObjX+19
+
     ; Set Y coordinate $98 for the item.
-    ;
     LDA #$98
     STA ObjY+19
+
     ; If the item is nothing ($3F), then loop gain.
-    ;
     LDA CaveItemIds, X
     AND #$3F
     CMP #$3F
     BEQ @NextWare
+
     ; Switch to the room item object slot, and draw it.
-    ;
     LDX #$13
     JSR AnimateItemObject
+
 @NextWare:
     ; Bottom of the item drawing loop. Decrement this index until < 0.
-    ;
     DEC $0421
     BPL @LoopWare
+
 @ShowPriceRupee:
     ; If the cave flags do not call for showing prices, then return.
-    ;
     LDA CaveFlags
     AND #$08                    ; Cave flag: Show prices
     BEQ @Exit
+
     ; Show a rupee at ($30, $AB).
-    ;
     LDA #$30
     STA ObjX+19
     LDA #$AB
@@ -440,36 +443,38 @@ DrawCaveItems:
     LDA #$18
     LDX #$13
     JSR AnimateItemObject
+
 @Exit:
     RTS
 
 UpdateCavePersonState_TransferPrices:
     ; If the cave flags do not call for showing prices, then
     ; advance the state and return.
-    ;
     LDA CaveFlags
     AND #$08                    ; Cave flag: Show prices
     BEQ IncCaveState
+
 WritePricesTransferBuf:
     JSR CopyPriceListTemplate
     LDA #$21                    ; "X"
+
 ; Params:
 ; A: price character
 ;
 WritePricesToDynamicTransferBuf:
     STA DynTileBuf+3
+
     ; Reset the index of current price being formatted
     ; and offset of price string.
-    ;
     LDX #$00
     STX CaveCurPriceIndex
     STX CaveCurPriceOffset
+
 @LoopPrice:
     ; Get the price of the current item.
-    ;
     LDA CavePrices, X
+
     ; If it's 0, then store a space character in the text field [01], [02], [03].
-    ;
     BNE @Format
     LDX #$24
     STX $01
@@ -479,18 +484,19 @@ WritePricesToDynamicTransferBuf:
 
 @Format:
     JSR FormatDecimalByte
+
     ; If the cave flags call for negative amounts, then
     ; store a dash in prefix byte [04]. Else store a space ($24).
-    ;
     LDX #$24
     LDA CaveFlags
     ASL
     BCC @Align
     LDX #$62                    ; "-"
+
 @Align:
     STX $04
+
     ; Move the dash closer to the number.
-    ;
     LDY CaveCurPriceOffset
     LDA $02
     JSR SwapSpaceAndSign
@@ -500,30 +506,32 @@ WritePricesToDynamicTransferBuf:
     STA DynTileBuf+5, Y
     LDA $03
     STA DynTileBuf+7, Y
+
     ; Add 4 to the base offset for the next string.
-    ;
     LDA CaveCurPriceOffset
     CLC
     ADC #$04
     STA CaveCurPriceOffset
+
     ; Bottom of the price loop. Increment the index of the item until = 3.
-    ;
     INC CaveCurPriceIndex
     LDX CaveCurPriceIndex
     CPX #$03
     BNE @LoopPrice
+
     ; Delay $A frames at the beginning of the next state.
-    ;
     LDA #$0A
     STA ObjTimer+1
+
     ; Go to the next state and return.
-    ;
     BNE IncCaveState
+
 ; Params:
 ; A: selector
 ;
 CueTransferBufAndAdvanceState:
     STA TileBufSelector
+
 IncCaveState:
     INC ObjState+1
     RTS
@@ -551,7 +559,6 @@ SwapSpaceAndSign:
 
 CopyPriceListTemplate:
     ; Copy $11 bytes of the price list template text to the dynamic transfer buf.
-    ;
     LDY #$10
 :
     LDA PriceListTemplateTransferBuf, Y
@@ -568,76 +575,76 @@ TextboxLineAddrsLo:
 
 UpdatePersonState_Textbox:
     JSR Link_EndMoveAndDraw_Bank1
+
     ; If the person's timer has not expired, then return.
-    ;
     LDA ObjTimer+1
     BNE @Exit
+
     ; Set the timer to wait 6 frames after the next character about
     ; to be shown.
-    ;
     LDA #$06
     STA ObjTimer+1
+
     ; Copy the 5 bytes of the textbox character transfer record template
     ; to the dynamic transfer buf.
-    ;
     LDY #$04
 :
     LDA TextboxCharTransferRecTemplate, Y
     STA DynTileBuf, Y
     DEY
     BPL :-
+
 @WriteChar:
     ; Replace the low byte of the VRAM address with the one
     ; where the next character should be written.
-    ;
     LDA PersonTextPtr
     STA DynTileBuf+1
+
     ; Increment the low VRAM address for the next character.
-    ;
     INC PersonTextPtr
+
     ; Use the person text selector to look up the address of the
     ; text for the textbox. Store the address in [00:01].
-    ;
     LDY PersonTextSelector
     LDA PersonTextAddrs, Y
     STA $00
     INY
     LDA PersonTextAddrs, Y
     STA $01
+
     ; Load the person text current character index.
-    ;
     LDY PersonTextIndex
+
     ; Increment the index variable to point to the next character
     ; for next time.
-    ;
     INC PersonTextIndex
+
     ; Get the current character.
-    ;
     LDA ($00), Y
+
     ; If the character is $25, then it's a special space. It will still
     ; take up space, but will not take time to show -- meaning that
     ; we'll go look up the next character to transfer.
-    ;
     AND #$3F
     CMP #$25
     BEQ @WriteChar
+
     ; We have a non-space character. Put it in the transfer record.
-    ;
     STA DynTileBuf+3
+
     ; Play the "heart taken/character" sound effect.
-    ;
     LDA #$10
     STA Tune0Request
+
     ; If the high 2 bits of character element = 0, then return.
-    ;
     LDA ($00), Y
     AND #$C0
     BEQ @Exit
+
     ; Determine an index based on the high 2 bits of the character element:
     ;   $80: 0
     ;   $40: 1
     ;   $C0: 2
-    ;
     LDY #$02
     CMP #$C0
     BEQ @ChangeLine
@@ -645,6 +652,7 @@ UpdatePersonState_Textbox:
     CMP #$40
     BEQ @ChangeLine
     DEY
+
 @ChangeLine:
     ; The index chooses the low VRAM address of the start
     ; of another line:
@@ -653,46 +661,46 @@ UpdatePersonState_Textbox:
     ;   2: $A4: front of the first line
     ;
     ; Look up the low VRAM address and store it.
-    ;
     LDA TextboxLineAddrsLo, Y
     STA PersonTextPtr
+
     ; If index = 2, then we've reached the end of the text,
     ; and low VRAM address is moved to the front of the first line.
     ; So, advance the state of the person object, and unhalt Link.
-    ;
     CPY #$02
     BNE @Exit
     INC ObjState+1
     JSR UnhaltLink
+
 @Exit:
     RTS
 
 UpdateCavePersonState_TalkOrShopOrDoorCharge:
     ; If the cave flags call for choosing an item, then
     ; go handle those kinds of caves.
-    ;
     LDA CaveFlags
     LSR                         ; Cave flag: Choose/Pick up (1)
     BCS @CheckPickUp
+
     ; Advance to the end state, where the person is still shown.
-    ;
     LDA #$08
     STA ObjState+1
+
     ; If this is not the "door charge" old man, then return.
     ; The person only talks.
-    ;
     LDA ObjType+1
     CMP #$71
     BNE @Exit
+
     ; Post 20 rupees to subtract.
-    ;
     LDA RupeesToSubtract
     CLC
     ADC #$14
     STA RupeesToSubtract
+
     ; Mark this secret taken.
-    ;
     JSR SetRoomFlagUWItemState
+
 @Exit:
     RTS
 
@@ -704,68 +712,66 @@ UpdateCavePersonState_TalkOrShopOrDoorCharge:
     ; - money game
     ;
     ; If rupees are decreasing, then return.
-    ;
     LDA RupeesToSubtract
     BNE @Exit
+
     ; Loop over each item from 2 to 0.
-    ;
     LDX #$02
+
 @LoopWare:
     ; If this item is nothing, then loop again.
-    ;
     LDA CaveItemIds, X
     AND #$3F                    ; Mask off the cave flags.
     CMP #$3F                    ; No item
     BEQ @NextWare
+
     ; If Link's X <> item's X, then loop again.
-    ;
     LDA ObjX
     CMP CaveWareXs, X
     BNE @NextWare
+
     ; If the vertical distance between Link and the item < 6, then
     ; go try to take it.
-    ;
     LDA ObjY
     SEC
     SBC #$98
     JSR Abs
     CMP #$06
     BCC @PickedUp
+
 @NextWare:
     ; Bottom of the item touch loop.
-    ;
     DEX
     BPL @LoopWare
     RTS
 
 @PickedUp:
     ; Store the index of the item chosen.
-    ;
     STX CaveChosenIndex
+
     ; If hint and money game cave flags are missing, then
     ; go take an item given away, or buy it.
-    ;
     LDA CaveFlags
     AND #$30                    ; Cave flags: Hint and Money game
     BEQ @PickedUpWare
+
     ; If have cave flag "money game", then go to state 5 and return.
-    ;
     AND #$10
     BEQ @MadeWager
+
     ; Else have "hint" cave flag.
     ;
     ; If rupees < price, then return.
-    ;
     LDA InvRupees
     CMP CavePrices, X
     BCC Exit
+
     ; Pass the price to pay for the hint.
-    ;
     LDA CavePrices, X
     JSR PostDebit
+
 @MadeWager:
     ; Go to state 5. It runs the hint cave and money game.
-    ;
     LDA #$05
     STA ObjState+1
     RTS
@@ -774,31 +780,30 @@ UpdateCavePersonState_TalkOrShopOrDoorCharge:
     ; This is a shop, or something is being given away.
     ;
     ; If "pay" cave flag is missing, then go try to take the item.
-    ;
     LDA CaveFlags
     AND #$02
     BEQ @TryToTake
+
     ; If rupees < price, then return.
-    ;
     LDA InvRupees
     CMP CavePrices, X
     BCC Exit
+
     ; Pass the price to pay for the item.
-    ;
     LDA CavePrices, X
     JSR PostDebit
+
 @TryToTake:
     ; If "heart requirement" cave flag is missing, then
     ; go to take the item without further ado.
-    ;
     LDA CaveFlags
     AND #$40
     BEQ @Take
+
     ; Check heart container requirements.
     ;
     ; 5 is the minimum for cave type $6C (white sword)
     ; $C is the minimum otherwise
-    ;
     LDY #$40
     LDA ObjType+1
     CMP #$6C
@@ -806,38 +811,39 @@ UpdateCavePersonState_TalkOrShopOrDoorCharge:
     LDY #$B0
 :
     CPY HeartValues
+
     ; If the minimum of heart containers is met, then
     ; go take the item without further ado.
-    ;
     BEQ @Take
     BCC @Take
     ; Begin unverified code 490E
     RTS
-
     ; End unverified code
+
 @Take:
     JSR SetRoomFlagUWItemState
     LDA CaveItemIds, X
     AND #$3F                    ; Mask off the cave flags.
     PHA                         ; Push the item ID
+
     ; Flag the item taken by setting its ID to $FF.
-    ;
     LDA #$FF
     STA CaveItemIds, X
     PLA                         ; Pop the item ID
     JSR TakeItem
     LDA #$1E                    ; Blank textbox lines
     JSR CueTransferBufAndAdvanceState
+
     ; Set timer to $40 for when we delay in state 4.
-    ;
     LDA #$40
     STA ObjTimer+1
+
 ClearPricesCaveFlag:
     ; Remove the "show prices" cave flag to get rid of the generic rupee.
-    ;
     LDA CaveFlags
     AND #$F7
     STA CaveFlags
+
 Exit:
     RTS
 
@@ -845,6 +851,7 @@ UpdatePersonState_DelayThenHide:
     LDA ObjTimer+1
     BNE L493A_Exit
     STA ObjType+1
+
 L493A_Exit:
     RTS
 
@@ -856,13 +863,12 @@ HintCaveTextSelectors1:
 
 UpdateCavePersonState_HintOrMoneyGame:
     ; If "hint" cave flag is missing, then go handle the money game.
-    ;
     LDA CaveFlags
     AND #$10
     BEQ @HandleMoneyGameOrGiveaway
+
     ; If cave type = $75, then use 0 for base offset of
     ; the first set of text selectors, else 3 for the second.
-    ;
     LDA #$00
     LDY ObjType+1
     CPY #$75
@@ -870,21 +876,21 @@ UpdateCavePersonState_HintOrMoneyGame:
     LDA #$03
 :
     CLC
+
     ; Add the base offset and the index of the item chosen
     ; to get the index of a text selector.
-    ;
     ADC CaveChosenIndex
     TAY
+
     ; Look up text selector by the index calculated above.
-    ;
     LDA HintCaveTextSelectors0, Y
     STA PersonTextSelector
+
     ; Point to the front of the first line of the textbox.
-    ;
     LDA TextboxLineAddrsLo+2
     STA PersonTextPtr
+
     ; Reset the character index.
-    ;
     LDA #$00
     STA PersonTextIndex
     JSR ClearPricesCaveFlag
@@ -895,25 +901,24 @@ UpdateCavePersonState_HintOrMoneyGame:
     ; If cave type < $7B, then go handle the money game.
     ;
     ; This is a moblin giving away money.
-    ;
     LDA ObjType+1
     CMP #$7B
     BCC @HandleMoneyGame
     JSR CopyPriceListTemplate
+
     ; Write a price list into the dynamic transfer buf,
     ; but with a space instead of "X".
-    ;
     LDA #$24
     JSR WritePricesToDynamicTransferBuf
     LDA #$08                    ; "key taken" sound effect
     STA Tune0Request
     JSR SetRoomFlagUWItemState
+
     ; Go to state 8 to do nothing but show the person.
-    ;
     LDA #$08
     STA ObjState+1
+
     ; Post the middle amount in [0431] to add.
-    ;
     LDA CavePrices+1
     JMP PostCredit
 
@@ -921,14 +926,13 @@ UpdateCavePersonState_HintOrMoneyGame:
     ; Money game
     ;
     ; If rupees < $A, then return.
-    ;
     LDA InvRupees
     CMP #$0A
     BCC L493A_Exit
     LDA #$08                    ; "key taken" sound effect
     STA Tune0Request
+
     ; Copy amounts in [0448][Y] for money game to prices [0430][Y].
-    ;
     LDY #$02
 :
     LDA MoneyGameAmounts, Y
@@ -936,12 +940,12 @@ UpdateCavePersonState_HintOrMoneyGame:
     DEY
     BPL :-
     JSR WritePricesTransferBuf
+
     ; Go to state 8 to do nothing but show the person.
-    ;
     LDA #$08
     STA ObjState+1
+
     ; Prepend the sign to each money game amount.
-    ;
     LDY #$01
     LDA MoneyGameAmounts+0
     JSR PrependSignToPrice
@@ -951,15 +955,16 @@ UpdateCavePersonState_HintOrMoneyGame:
     LDY #$09
     LDA MoneyGameAmounts+2
     JSR PrependSignToPrice
+
     ; If the amount chosen = 20 or 50, then add it;
     ; else subtract it.
-    ;
     LDX CaveChosenIndex
     LDA MoneyGameAmounts, X
     CMP #$14
     BEQ PostCredit
     CMP #$32
     BNE PostDebit
+
 PostCredit:
     CLC
     ADC RupeesToAdd
@@ -993,9 +998,9 @@ PrependSignToPrice:
 :
     ; Copy the character to the first element after the "X",
     ; offset by the parameter.
-    ;
     TXA
     STA DynTileBuf+4, Y
+
 UpdateCavePersonState_DoNothing:
     RTS
 
@@ -1005,11 +1010,11 @@ UpdatePersonState_CueTransferBlankPersonWares:
 
 InitUnderworldPerson_Full:
     ; Point to the front of the first line in VRAM.
-    ;
     LDA TextboxLineAddrsLo+2
     STA PersonTextPtr
     LDA CurLevel
     JSR TableJump
+
 InitUnderworldPerson_Full_JumpTable:
     .ADDR InitUnderworldPerson_DoNothing
     .ADDR InitUnderworldPersonA
@@ -1027,44 +1032,43 @@ UnderworldPersonTextSelectorsA:
 
 InitUnderworldPersonA:
     ; The person goes at location ($78, $80).
-    ;
     LDA #$78
     LDY #$80
     JSR SetUpCommonCaveObjects
+
     ; Subtract $4B from the object type to get the old man's index.
-    ;
     LDA ObjType, X
     SEC
     SBC #$4B
     TAY
+
     ; Look up and store the text selector.
-    ;
     LDA UnderworldPersonTextSelectorsA, Y
     STA PersonTextSelector
+
     ; If this is the man that offers more bomb capacity, then
     ; go see if the offer was flagged as already taken.
-    ;
     LDA ObjType+1
     CMP #$4F
     BNE L_PlayCharacterSfx
     BEQ UnderworldPerson_DestroyIfTaken
+
 InitUnderworldPersonLifeOrMoney_Full:
     ; The person goes at location ($78, $80).
-    ;
     LDA #$78
     LDY #$80
     JSR SetUpCommonCaveObjects
+
     ; Set text selector for "life or money".
-    ;
     LDA #$36
     STA PersonTextSelector
+
     ; Point to the front of the first line in VRAM.
-    ;
     LDA TextboxLineAddrsLo+2
     STA PersonTextPtr
+
 UnderworldPerson_DestroyIfTaken:
     ; Destroy this object if the secret/item was already taken.
-    ;
     JSR GetRoomFlagUWItemState
     BEQ L_PlayCharacterSfx
     LDA #$00
@@ -1079,18 +1083,17 @@ UnderworldPersonTextSelectorsB:
 
 InitUnderworldPersonB:
     ; The person goes at location ($78, $80).
-    ;
     LDA #$78
     LDY #$80
     JSR SetUpCommonCaveObjects
+
     ; Subtract $4B from the object type to get the old man's index.
-    ;
     LDA ObjType, X
     SEC
     SBC #$4B
     TAY
+
     ; Look up and store the text selector.
-    ;
     LDA UnderworldPersonTextSelectorsB, Y
     STA PersonTextSelector
     JMP PlayCharacterSfx
@@ -1100,59 +1103,58 @@ UnderworldPersonTextSelectorsC:
 
 InitUnderworldPersonC:
     ; The person goes at location ($78, $80).
-    ;
     LDA #$78
     LDY #$80
     JSR SetUpCommonCaveObjects
     JSR PlayCharacterSfx
     LDA ObjType, X
     PHA                         ; Save the object type.
+
     ; Subtract $4B from the object type to get the old man's index.
-    ;
     SEC
     SBC #$4B
     TAY
+
     ; Look up and store the text selector.
-    ;
     LDA UnderworldPersonTextSelectorsC, Y
     STA PersonTextSelector
     PLA                         ; Restore the object type.
+
     ; Return, if this is not the man at the entrance of Level 9,
     ; or Link has not gotten all the triforce pieces.
-    ;
     CMP #$4B
     BNE @Exit
     LDA InvTriforce
     CMP #$FF
     BNE @Exit
+
     ; Otherwise, open the shutters, and destroy this object.
-    ;
     LDA #$01
     STA ShutterTrigger
     LSR
     STA ObjState
     JSR DestroyMonster
+
 @Exit:
     RTS
 
 InitGrumble_Full:
     ; Grumble Goriya goes at location ($78, $80).
-    ;
     LDA #$78
     LDY #$80
     JSR SetUpCommonCaveObjects
+
     ; Store text selector $24.
-    ;
     LDA #$24
     STA PersonTextSelector
+
     ; Set the low VRAM address of the first character to transfer
     ; to the front of the first line in NT0. It's at index 2.
-    ;
     LDA TextboxLineAddrsLo+2
     STA PersonTextPtr
+
     ; If Grumble already got the food, then
     ; reset his type and state to get rid of him.
-    ;
     JSR GetRoomFlagUWItemState
     BEQ PlayCharacterSfx
     LDA #$00
@@ -1168,7 +1170,6 @@ PlayCharacterSfx:
 UpdateUnderworldPerson_Full:
     ; If level is not one of {3, 4, 6, 8, 9}, then
     ; go handle people that do more than talk.
-    ;
     LDA CurLevel
     CMP #$03
     BCC :+
@@ -1181,10 +1182,10 @@ UpdateUnderworldPerson_Full:
 
 @DrawAndCheckCollisions:
     ; Else simply draw, check collisions, and show the text.
-    ;
     JSR Person_DrawAndCheckCollisions
     LDA ObjState+1
     JSR TableJump
+
 UpdateUnderworldPerson_Full_JumpTable:
     .ADDR UpdatePersonState_ResetCharOffset
     .ADDR UpdatePersonState_Textbox
@@ -1194,14 +1195,15 @@ UpdatePersonState_ResetCharOffset:
     LDA #$00
     STA PersonTextIndex
     INC ObjState+1
+
 UpdatePersonState_DoNothing:
     RTS
 
 Person_CheckCollisions:
     JSR CheckMonsterCollisions
+
     ; If the person died, then Link hit him. So, start shooting
     ; fireballs, then reset the metastate, so that he's not dead.
-    ;
     LDA ObjMetastate+1
     BEQ :+
     STA PersonFireballsEnabled
@@ -1212,7 +1214,6 @@ Person_CheckCollisions:
 
 UpdateUnderworldPersonComplex:
     ; In state 4, the person is shown every other frame.
-    ;
     LDA ObjState+1
     CMP #$04
     BNE :+
@@ -1221,9 +1222,9 @@ UpdateUnderworldPersonComplex:
     BNE @HandleState
 :
     JSR Person_DrawAndCheckCollisions
+
     ; If this is the "more bombs" man, then show a rupee
     ; at ($78, $98) using room item object slot $13.
-    ;
     LDA ObjType+1
     CMP #$4F
     BNE @HandleState
@@ -1234,9 +1235,11 @@ UpdateUnderworldPersonComplex:
     LDA #$18
     LDX #$13
     JSR AnimateItemObject
+
 @HandleState:
     LDA ObjState+1
     JSR TableJump
+
 UpdateUnderworldPersonComplex_JumpTable:
     .ADDR UpdateUnderworldPersonComplexState_Begin
     .ADDR UpdatePersonState_Textbox
@@ -1246,7 +1249,6 @@ UpdateUnderworldPersonComplex_JumpTable:
 
 UpdateUnderworldPersonComplexState_Begin:
     ; If this is the "more bombs" man, then show the price of the offer.
-    ;
     LDA ObjType+1
     CMP #$4F
     BNE :+
@@ -1255,7 +1257,6 @@ UpdateUnderworldPersonComplexState_Begin:
 :
     ; Set a timer of $A frames before showing characters,
     ; and go to state 1.
-    ;
     LDA #$0A
     STA ObjTimer+1
     INC ObjState+1
@@ -1263,59 +1264,56 @@ UpdateUnderworldPersonComplexState_Begin:
 
 UpdateUnderworldPersonComplexState_SenseLink:
     ; If this is not the "more bombs" man, then return.
-    ;
     LDA ObjType+1
     CMP #$4F
     BNE @Exit
+
     ; If Link's X <> $78, then return.
-    ;
     LDA ObjX
     CMP #$78
     BNE @Exit
+
     ; If the distance between Link's Y and the rupee's ($98) < 6,
     ; then go see if Link can pay for it.
     ; Else return.
-    ;
     LDA ObjY
     SEC
     SBC #$98
     JSR Abs
     CMP #$06
     BCC @CheckCanPay
+
 @Exit:
     RTS
 
 @CheckCanPay:
     ; If rupee count < 100, then return.
-    ;
     LDA #$64
     CMP InvRupees
     BEQ :+
     BCS @Exit
 :
     ; Post 100 rupees more to subtract.
-    ;
     CLC
     ADC RupeesToSubtract
     STA RupeesToSubtract
+
     ; Play the "key taken" sound effect.
-    ;
     LDA #$08
     STA Tune0Request
+
     ; Increase max bombs by 4, set the amount on hand to the max.
-    ;
     LDA MaxBombs
     CLC
     ADC #$04
     STA MaxBombs
     STA InvBombs
+
     ; Go mark this offer taken.
-    ;
     JMP L_Person_FlagItemTakenAndAdvanceState
 
 UpdateUnderworldPersonComplexState_DelayAndQuit:
     ; If the object timer has expired, then destroy this object.
-    ;
     LDA ObjTimer+1
     BNE :+
     STA ObjType+1
@@ -1329,19 +1327,20 @@ Person_DrawAndCheckCollisions:
 
 UpdateUnderworldPersonLifeOrMoney_Full:
     ; In state 4, this person and the items are drawn every other frame.
-    ;
     LDA ObjState+1
     CMP #$04
     BNE @Draw
     LDA FrameCounter
     AND #$01
     BNE :+
+
 @Draw:
     JSR Person_DrawAndCheckCollisions
     JSR DrawLifeOrMoneyItems
 :
     LDA ObjState+1
     JSR TableJump
+
 UpdateUnderworldPersonLifeOrMoney_Full_JumpTable:
     .ADDR UpdateUnderworldPersonLifeOrMoneyState_0
     .ADDR UpdatePersonState_Textbox
@@ -1357,22 +1356,22 @@ LifeOrMoneyItemTypes:
 
 DrawLifeOrMoneyItems:
     ; Loop over each item to draw, from 1 to 0.
-    ;
     LDX #$01
+
 @LoopWare:
     TXA                         ; Save loop index.
     PHA
+
     ; Look up and set the X coordinate of the item.
-    ;
     LDA LifeOrMoneyItemXs, X
     STA ObjX+19
+
     ; Set Y=$98, and look up the item type.
-    ;
     LDA #$98
     STA ObjY+19
     LDA LifeOrMoneyItemTypes, X
+
     ; Switch to the room item object slot.
-    ;
     LDX #$13
     JSR AnimateItemObject
     PLA                         ; Restore loop index.
@@ -1383,7 +1382,6 @@ DrawLifeOrMoneyItems:
 
 UpdateUnderworldPersonLifeOrMoneyState_0:
     ; Delay in the next state $A frames before showing the first character.
-    ;
     LDA #$0A
     STA ObjTimer+1
     LDA #$76                    ; "-1   -50" text selector
@@ -1391,44 +1389,44 @@ UpdateUnderworldPersonLifeOrMoneyState_0:
 
 UpdateUnderworldPersonLifeOrMoneyState_2:
     ; Loop over each item to check, from 1 to 0.
-    ;
     LDX #$01
+
 @LoopWare:
     ; If Link's X doesn't match the item's, then go loop again.
-    ;
     LDA ObjX
     CMP LifeOrMoneyItemXs, X
     BNE @NextWare
+
     ; If the vertical distance between the item and Link < 6, then
     ; go handle paying appropriately.
-    ;
     LDA ObjY
     SEC
     SBC #$98
     JSR Abs
     CMP #$06
     BCC @Pay
+
 @NextWare:
     DEX
     BPL @LoopWare
+
 @Exit:
     RTS
 
 @Pay:
     ; If the player chose the heart container, go handle it.
-    ;
     CPX #$00
     BEQ @PayWithHeartContainer
+
     ; The player chose the money.
     ; But if he doesn't have enough, then return.
-    ;
     LDA #$32
     CMP InvRupees
     BEQ @PayWithMoney
     BCS @Exit
+
 @PayWithMoney:
     ; Post 50 rupees more to subtract, and go flag this offer taken.
-    ;
     CLC
     ADC RupeesToSubtract
     STA RupeesToSubtract
@@ -1442,7 +1440,6 @@ UpdateUnderworldPersonLifeOrMoneyState_2:
     ; - set HeartPartial to 0, so Link will die with one more hit
     ;
     ; Then go flag this offer taken.
-    ;
     LDA HeartValues
     AND #$F0
     CMP #$30
@@ -1454,28 +1451,27 @@ UpdateUnderworldPersonLifeOrMoneyState_2:
 
 @Reduce:
     ; Store (HeartValues - 1 heart container) in [00].
-    ;
     LDA HeartValues
     PHA
     AND #$F0
     SEC
     SBC #$10
     STA $00
+
     ; Get (HeartValues - 1 heart)
-    ;
     PLA
     AND #$0F
     SEC
     SBC #$01
+
     ; If the result is negative, then make the full hearts 0.
-    ;
     BPL :+
     LDA #$00
 :
     ; Combine the heart containers and full hearts, and store it.
-    ;
     ORA $00
     STA HeartValues
+
 @EndLifeOrMoney:
     LDA #$08                    ; "key taken" sound effect
     STA Tune0Request
@@ -1485,16 +1481,16 @@ UpdateUnderworldPersonLifeOrMoneyState_2:
 
 UpdateGrumble_Full:
     ; If state <> 3, then go check collisions and draw every frame.
-    ;
     LDA ObjState+1
     CMP #$03
     BNE @DrawAndCheckCollisions
+
     ; In state 3, the person is translucent by drawing
     ; (and checking object collisions) every other frame.
-    ;
     LDA FrameCounter
     AND #$01
     BNE :+
+
 @DrawAndCheckCollisions:
     JSR Person_CheckCollisions
     JSR Anim_FetchObjPosForSpriteDescriptor
@@ -1502,6 +1498,7 @@ UpdateGrumble_Full:
 :
     LDA ObjState+1
     JSR TableJump
+
 UpdateGrumble_Full_JumpTable:
     .ADDR UpdatePersonState_Textbox
     .ADDR UpdateGrumble1
@@ -1510,49 +1507,49 @@ UpdateGrumble_Full_JumpTable:
 
 UpdateGrumble1:
     ; If there's no food in object slot $F, then return.
-    ;
     LDY #$0F
     LDA a:ObjState, Y
     ASL
     BCC InitUnderworldPerson_DoNothing
+
     ; Else halt Link and play the "secret found" tune.
-    ;
     LDA #$40
     STA ObjState
     LDA #$04
     STA Tune1Request
+
 L_Person_FlagItemTakenAndAdvanceState:
     ; Flag the secret/item of this room taken.
-    ;
     JSR SetRoomFlagUWItemState
+
     ; Set object timer $40 for when we get to state 3.
-    ;
     LDA #$40
     STA ObjTimer+1
+
     ; Cue transfer record of the blank textbox lines,
     ; and go to the next state, where a transfer record is cued
     ; to clear cave/person wares.
-    ;
     LDA #$1E
     JMP CueTransferBufAndAdvanceState
 
 UpdateGrumble3:
     JSR Link_EndMoveAndAnimate_Bank1
+
     ; If the timer has not expired, then return.
-    ;
     LDA ObjTimer+1
     BNE InitUnderworldPerson_DoNothing
+
     ; Deactivate the food object in slot $F.
-    ;
     LDY #$0F
     STA a:ObjState, Y
+
     ; Get rid of the food from the inventory.
-    ;
     STA InvFood
+
     ; Make Link idle again, and reset this object's type.
-    ;
     STA ObjState
     STA ObjType+1
+
 InitUnderworldPerson_DoNothing:
     RTS
 
@@ -1579,11 +1576,12 @@ CopyCommonCodeToRam:
     LDA #>__BANK_01_CODE_RUN__
     STA $03
     LDY #$00
+
 @Loop:
     LDA ($00), Y                ; Copy 1 byte.
     STA ($02), Y
+
     ; Increment source address.
-    ;
     LDA $00
     CLC
     ADC #$01
@@ -1591,8 +1589,8 @@ CopyCommonCodeToRam:
     LDA $01
     ADC #$00
     STA $01
+
     ; Increment destination address.
-    ;
     LDA $02
     CLC
     ADC #$01
@@ -1622,16 +1620,16 @@ DemoPatternVramAddrs:
 TransferDemoPatterns:
     JSR TurnOffAllVideo
     LDA PpuStatus_2002          ; Clear address latch.
+
 @LoopBlock:
     ; Loop over each block.
-    ;
     LDA PatternBlockIndex
     ASL
     TAX
+
     ; Put block address in [00:01] and size in [03:02].
     ; Load destination VRAM address and set it.
     ; The size and VRAM address have the high byte first.
-    ;
     LDA DemoPatternBlockAddrs, X
     STA $00
     LDA DemoPatternBlockSizes, X
@@ -1645,8 +1643,8 @@ TransferDemoPatterns:
     STA $03
     LDA DemoPatternVramAddrs, X
     JSR TransferPatternBlock_Bank1
+
     ; Loop until pattern block index = 2.
-    ;
     LDA PatternBlockIndex
     CMP #$02
     BNE @LoopBlock
@@ -1664,13 +1662,13 @@ TransferDemoPatterns:
 TransferPatternBlock_Bank1:
     STA PpuAddr_2006
     LDY #$00
+
 @Loop:
     ; Load and transfer one byte to VRAM.
-    ;
     LDA ($00), Y
     STA PpuData_2007
+
     ; Increment the 16-bit address at [00:01].
-    ;
     LDA $00
     CLC
     ADC #$01
@@ -1678,8 +1676,8 @@ TransferPatternBlock_Bank1:
     LDA $01
     ADC #$00
     STA $01
+
     ; Decrement the 16-bit amount at [03:02].
-    ;
     LDA $03
     SEC
     SBC #$01
@@ -1687,14 +1685,14 @@ TransferPatternBlock_Bank1:
     LDA $02
     SBC #$00
     STA $02
+
     ; Loop again if the amount left <> 0.
-    ;
     LDA $02
     BNE @Loop
     LDA $03
     BNE @Loop
+
     ; This block is done. Increment the block index.
-    ;
     INC PatternBlockIndex
     RTS
 
@@ -1750,12 +1748,12 @@ DemoBackgroundPatterns:
 ;
 InitWhirlwind:
     STA ObjY
+
 ; Params:
 ; X: object index
 ;
 SetUpWhirlwind:
     ; Set the whirlwind's Y to Link's, X to 0, and type $2E.
-    ;
     LDA ObjY
     STA ObjY, X
     LDA #$00
@@ -1769,45 +1767,44 @@ WhirlwindPrevRoomIdList:
 
 UpdateWhirlwind_Full:
     ; Get Link's halted state.
-    ;
     LDA ObjState
     AND #$40
     TAY
+
     ; Add 2 to whirlwind X.
-    ;
     LDA #$02
     CLC
     ADC ObjX, X
     STA ObjX, X
+
     ; If Link is not halted or teleporting state = 0, then
     ; go check for collision with Link.
-    ;
     CPY #$40
     BNE @CheckCollision
     LDY WhirlwindTeleportingState
     BEQ @CheckCollision
+
     ; Else Link is halted (state $40) and teleporting state <> 0.
     ;
     ; Set Link's X to whirlwind's.
-    ;
     STA ObjX
+
     ; If teleporting state = 1 or whirlwind's X <> $80, go check
     ; the right screen edge and draw.
-    ;
     DEY
     BEQ @CheckRightEdge
     CMP #$80
     BNE @CheckRightEdge
+
     ; Teleporting state = 2 and whirlwind's X = $80.
     ;
     ; Reset Link's state, teleporting state, and whirlwind object type.
-    ;
     ASL
     STA ObjState
     STA WhirlwindTeleportingState
     STA ObjType, X
+
     ; Update the player position marker, and draw one last time.
-    ;
     TXA
     PHA
     JSR UpdatePlayerPositionMarker
@@ -1821,54 +1818,53 @@ UpdateWhirlwind_Full:
     ;
     ; If the whirlwind does not collide with Link, then go check
     ; for the screen's right edge.
-    ;
     JSR CheckLinkCollision
     LDA $06
     BEQ @CheckRightEdge
+
     ; Collided with Link.
     ;
     ; Make Link face right. Reset shove info and subroom type.
-    ;
     LDA #$01
     STA ObjDir
     LSR
     STA ObjShoveDir
     STA ObjShoveDistance
     STA UndergroundExitType
+
     ; Halt Link (state $40), and hide him.
-    ;
     LDA #$40
     STA ObjState
     LDA #$F8
     STA Sprites+72
     STA Sprites+76
+
     ; Find and set the room that will behave as the previous room
     ; when scrolling right to the room with the level's entrance.
-    ;
     LDA TeleportingLevelIndex
     AND #$07
     TAY
     LDA WhirlwindPrevRoomIdList, Y
     STA WhirlwindPrevRoomId
+
     ; Set teleporting state 1.
-    ;
     INC WhirlwindTeleportingState
+
 @CheckRightEdge:
     ; If whirlwind's X < $F0, go draw.
-    ;
     LDA ObjX, X
     CMP #$F0
     BCC @Draw
+
     ; The whirlwind has reached the right edge of the screen.
     ;
     ; Destroy the object.
-    ;
     JSR DestroyWhirlwind
+
     ; If teleporting state <> 0, we picked up Link.
     ; So, go to the next mode.
     ;
     ; Either way, draw one last time.
-    ;
     LDA WhirlwindTeleportingState
     BEQ @Draw
     TXA
@@ -1876,6 +1872,7 @@ UpdateWhirlwind_Full:
     JSR GoToNextModeFromPlay
     PLA
     TAX
+
 @Draw:
     JMP DrawWhirlwind
 
@@ -1895,36 +1892,35 @@ DestroyWhirlwind:
 
 SummonWhirlwind:
     ; If not in mode 5, return.
-    ;
     LDA GameMode
     CMP #$05
     BNE L6104_Exit
+
     ; Advance the teleporting index, and store the mask for its level in [00].
-    ;
     JSR AdvanceTeleportingLevelIndex
     LDA TeleportingLevelIndex
     AND #$07                    ; Truncate to wrap the index around.
     TAY
     LDA LevelMasks, Y           ; Note that this is from element 1 instead of 0.
     STA $00
+
 @LoopTriforcePiece:
     ; If there are no triforce pieces, then return.
-    ;
     LDA InvTriforce
     BEQ L6104_Exit
+
     ; If we have gotten this triforce piece, then go try to make a
     ; whirlwind.
-    ;
     BIT $00
     BNE @MakeWhirlwind
+
     ; We have not gotten this piece.
     ; First, advance the teleporting index again.
-    ;
     JSR AdvanceTeleportingLevelIndex
+
     ; If the direction Link is facing is an increasing one, then
     ; rotate the level mask in [00] left to correspond to the higher
     ; level number. Then go test this new mask.
-    ;
     LDA ObjDir
     AND #$09
     BEQ @DecreasingDir
@@ -1937,7 +1933,6 @@ SummonWhirlwind:
     ; If instead the direction is a decreasing one, then
     ; rotate right to correspond to the lower level number.
     ; Then go test this new mask.
-    ;
     LSR $00
     BCC @LoopTriforcePiece
     ROR $00
@@ -1946,17 +1941,16 @@ SummonWhirlwind:
 @MakeWhirlwind:
     ; If already summoned or in the middle of teleporting, then
     ; return and don't summon another one.
-    ;
     LDA SummonedWhirlwind
     ORA WhirlwindTeleportingState
     BNE L6104_Exit
+
     ; Return if we can't find an empty monster slot.
-    ;
     JSR FindEmptyMonsterSlot
     BEQ L6104_Exit
+
     ; An empty slot was found. Flag that summoned the whirlwind.
     ; Switch to the empty slot, and go set up a whirlwind object.
-    ;
     INC SummonedWhirlwind
     TYA
     TAX
@@ -1965,30 +1959,29 @@ SummonWhirlwind:
 AdvanceTeleportingLevelIndex:
     ; If Link is facing an increasing direction (right or down), then
     ; increase the index. Otherwise, decrease it.
-    ;
     INC TeleportingLevelIndex
     LDA ObjDir
     AND #$09
     BNE L6104_Exit
     DEC TeleportingLevelIndex
     DEC TeleportingLevelIndex
+
 L6104_Exit:
     RTS
 
 DrawWhirlwind:
     ; Frames last 1 screen frame.
-    ;
     LDA #$01
     JSR Anim_AdvanceAnimCounterAndSetObjPosForSpriteDescriptor
+
     ; The whirlwind flashes by using a palette row based on the
     ; screen frame counter.
-    ;
     LDA FrameCounter
     AND #$03
     JSR Anim_SetSpriteDescriptorAttributes
+
     ; Flip horizontally based on movement frame, which is
     ; switched based on animation counter.
-    ;
     JSR Anim_SetObjHFlipForSpriteDescriptor
     LDA #$00                    ; Whirlwind has only 1 animation frame image.
     JMP DrawObjectNotMirrored
@@ -1999,11 +1992,11 @@ TeleportYs:
 CheckInitWhirlwindAndBeginUpdate:
     LDA WhirlwindTeleportingState
     BEQ :+                      ; If not teleporting, go start updating the mode.
+
     ; Since we're already teleporting, the source room was
     ; already done. Set up the whirlwind object in destination room.
     ;
     ; Teleporting state 2 drops off Link.
-    ;
     INC WhirlwindTeleportingState
     LDA #$40                    ; Halt Link (state $40).
     STA ObjState
@@ -2025,8 +2018,8 @@ CheckInitWhirlwindAndBeginUpdate:
 CheckTileObjectsBlocking:
     ; Look for a tile object among objects 1 to 12 that can block
     ; the player's movement.
-    ;
     LDX #$0C
+
 @LoopTileObj:
     LDA ObjType, X
     CMP #$68                    ; Block
@@ -2037,20 +2030,21 @@ CheckTileObjectsBlocking:
     BEQ @Found
     CMP #$66                    ; Armos1. But it seems to be unused, along with Armos2 ($67).
     BNE @NextTileObj            ; If it doesn't match any, go check the next object.
+
 @Found:
     LDA ObjState, X
     CMP #$01
     BNE @NextTileObj            ; If not active, go check the next object.
+
     ; If X distance between Link and the object >= $10, skip it.
-    ;
     LDA ObjX
     SEC
     SBC ObjX, X
     JSR Abs
     CMP #$10
     BCS @NextTileObj
+
     ; If Y distance between Link and the object >= $10, skip it.
-    ;
     LDA ObjY
     CLC
     ADC #$03                    ; First, adjust Link's position.
@@ -2059,10 +2053,11 @@ CheckTileObjectsBlocking:
     JSR Abs
     CMP #$10
     BCS @NextTileObj
+
     ; Link is near the object. Reset movement direction.
-    ;
     LDA #$00
     STA $0F
+
 @NextTileObj:
     DEX
     BNE @LoopTileObj
@@ -2070,19 +2065,18 @@ CheckTileObjectsBlocking:
 
 CheckPowerTriforceFanfare:
     ; If the fanfare is not active, then return.
-    ;
     LDA TriforceFanfareActive
     BEQ @Exit
+
     ; When Link's timer expires, go finish up the fanfare.
-    ;
     LDA ObjTimer
     BEQ @EndFanfare
+
     ; While Link's timer is counting down, every 4 frames, switch
     ; between the level palette and the white palette.
-    ;
     LDY #$18
+
     ; Redundant check of Link's timer that won't branch.
-    ;
     LDA ObjTimer
     BEQ @FillHearts
     AND #$07
@@ -2099,11 +2093,10 @@ CheckPowerTriforceFanfare:
     STA World_IsFillingHearts
     INC GameSubmode
     RTS
-
     ; End unverified code
+
 @EndFanfare:
     ; The fanfare is done.
-    ;
     JSR ReplaceAshesPaletteRow
     LDA #$20                    ; Play the song for level 9 again.
     STA SongRequest
@@ -2112,13 +2105,14 @@ CheckPowerTriforceFanfare:
     LSR
     STA ObjState                ; Make Link idle and not halted.
     STA TriforceFanfareActive   ; Flag the fanfare not active.
+
 @Exit:
     RTS
 
 TakePowerTriforce:
     INC TriforceFanfareActive
+
     ; Halt Link for $C0 frames.
-    ;
     LDA #$C0
     STA ObjTimer
     LDA #$40
@@ -2140,21 +2134,24 @@ ReplaceGanonBrownPaletteRow:
     ; Begin unverified code 61CE
     LDY #$02
     BNE :+
+
 ReplaceGanonBluePaletteRow:
     LDY #$05
     BNE :+
     ; End unverified code
+
 ReplaceAshesPaletteRow:
     LDY #$08
 :
     TYA
     PHA
+
     ; Get the dynamic transfer buf length, so we write from were we last wrote.
-    ;
     LDX DynTileBufLen
+
     ; Copy the palette row 7 transfer record to dynamic transfer buf (8 bytes).
-    ;
     LDY #$00
+
 @CopyPaletteRecord:
     LDA PaletteRow7TransferRecord, Y
     STA DynTileBuf, X
@@ -2162,11 +2159,12 @@ ReplaceAshesPaletteRow:
     INY
     CPY #$08
     BNE @CopyPaletteRecord
+
     ; Update the dynamic transfer buf length.
-    ;
     STX DynTileBufLen
     PLA
     TAY
+
     ; Replace the last 3 color bytes (brown shades) that we just
     ; copied to the dynamic transfer buf with the colors of the
     ; pile of ashes.
@@ -2174,16 +2172,16 @@ ReplaceAshesPaletteRow:
     ; Note that here the dynamic transfer buf is being written with
     ; absolute offsets, instead of relative ones used in copying
     ; the base/template palette row transfer record.
-    ;
     LDX #$02
+
 @ReplaceColors:
     LDA GanonColorTriples, Y
     STA DynTileBuf+4, X
     DEY
     DEX
     BPL @ReplaceColors
+
     ; Switch back to the current object slot.
-    ;
     LDX CurObjIndex
     RTS
 
@@ -2211,8 +2209,8 @@ Unused_ActivateRoomItem_Bank1:
     STA Tune1Request
 :
     RTS
-
     ; End unverified code
+
 LinkToSquareOffsetsX:
     .BYTE $00, $00, $F0, $10
 
@@ -2224,22 +2222,23 @@ LinkToSquareOffsetsY:
 ;
 CheckPassiveTileObjects:
     ; If grid offset <> 0 or input direction = 0, return.
-    ;
     LDA ObjGridOffset
     BNE @ReturnX0
     LDA ObjInputDir
     BEQ @ReturnX0
+
     ; Compare the collided tile with tiles $BC to $C3.
     ; These are tiles for gravestone and armos squares.
-    ;
     LDA #$BB
     STA $02                     ; [02] holds the collided tile.
     LDX #$08
     LDA ObjCollidedTile
+
 @NextTile:
     INC $02
     DEX
     BPL @TestTile
+
 @ReturnX0:
     LDX #$00
     RTS
@@ -2247,9 +2246,9 @@ CheckPassiveTileObjects:
 @TestTile:
     CMP $02
     BNE @NextTile
+
     ; We'll be computing the location of the square.
     ; Start with Link's location.
-    ;
     LDA ObjX
     STA $00                     ; [00] holds X coordinate
     LDA ObjY
@@ -2257,6 +2256,7 @@ CheckPassiveTileObjects:
     LDA ObjDir
     AND #$0C
     BEQ @CheckHorizontal
+
     ; Link is facing vertically.
     ;
     ; If Link touched the left side of the square with the right side
@@ -2264,7 +2264,6 @@ CheckPassiveTileObjects:
     ;
     ; If Link touched the right side of the square with the left side
     ; of his body, then bitwise AND'ing with $F0 will align X with the square.
-    ;
     LDA $02
     AND #$03
     TAY
@@ -2283,7 +2282,6 @@ CheckPassiveTileObjects:
     ;
     ; If Link touched the top of the square with the bottom
     ; of his body, then add 8 to Y.
-    ;
     LDA $02
     LSR
     BCS @FindSlot
@@ -2291,21 +2289,21 @@ CheckPassiveTileObjects:
     CLC
     ADC #$08
     STA $01
+
 @FindSlot:
     ; Look for an empty slot to instantiate a monster in.
     ; If none was found, then return.
-    ;
     JSR FindEmptyMonsterSlot
     BEQ @ExitX0
+
     ; When dealing with objects, X usually indicates the slot number
     ; of the object. Set it to the empty slot found.
-    ;
     LDX EmptyMonsterSlot
+
     ; Offset the coordinates we calculated by a square length
     ; in the direction Link is facing.
     ;
     ; Set the new object's location to them.
-    ;
     LDA ObjDir
     JSR GetOppositeDir
     LDA $00
@@ -2316,18 +2314,19 @@ CheckPassiveTileObjects:
     CLC
     ADC LinkToSquareOffsetsY, Y
     STA ObjY, X
+
     ; Return, if the empty slot we found indicates it was initialized.
     ; I don't know how it would get in this state, because when
     ; a monster is destroyed, type is assigned 0, and it's uninitialized.
-    ;
     LDA ObjUninitialized, X
     BEQ @ExitX0
+
     ; Because armos and flying ghini fade into existence over a little time,
     ; see if one is already beginning to appear at that location.
     ; Don't instantiate another one, if there is.
-    ;
     LDY #$0B
     STX $03                     ; [03] holds the index of the slot to compare to the empty one.
+
 @FindObjAtLocation:
     CPY $03
     BEQ @NextObjAtLocation      ; Skip the empty slot we found. So go decrement index [03].
@@ -2342,12 +2341,13 @@ CheckPassiveTileObjects:
     LDA ObjUninitialized, Y
     BEQ @ExitX0                 ; If there was an initialized object at that location, return.
     BNE @ChooseObjType          ; If there was never an object there, go instantiate one.
+
 @NextObjAtLocation:
     DEY
     BNE @FindObjAtLocation
+
 @ChooseObjType:
     ; Choose the right object type for the tile.
-    ;
     LDA #$1E                    ; Armos
     LDY $02                     ; [02] collided tile
     CPY #$C0
@@ -2358,6 +2358,7 @@ CheckPassiveTileObjects:
     JSR ResetObjMetastate
     LDA #$3F                    ; Fade in for $3F frames.
     STA ObjTimer, X
+
 @ExitX0:
     LDX #$00                    ; Restore player index in X.
     RTS
@@ -2373,19 +2374,19 @@ RupeeStashYs:
 InitRupeeStash_Full:
     ; When initializing, this object makes other objects that
     ; each have the same object attributes and type as this one.
-    ;
     LDA ObjAttr, X
     STA $01                     ; [01] holds object attributes
     LDA #$35
     STA $00                     ; [01] holds object type $35 (rupee stash)
+
     ; Loop over $A rupee stash objects to make
     ; -- each one now representing an individual rupee
-    ;
     LDX #$0A
+
 @LoopRupee:
     JSR InitOneSimpleObject
+
     ; Look up and set the coordinates for one rupee stash/rupee.
-    ;
     LDA RupeeStashXs-1, X
     STA ObjX, X
     LDA RupeeStashYs-1, X
@@ -2415,34 +2416,33 @@ TrapYs:
 
 InitTrap_Full:
     ; Copy this parent/generator object's attributes to [01].
-    ;
     LDA ObjAttr, X
     STA $01
+
     ; Assume we're initializing trap object type $49 that makes 6 traps.
-    ;
     LDY #$05
+
     ; The individual trap objects to make will be of type $49.
     ; Store it in [00].
-    ;
     LDA #$49
     STA $00
+
     ; If the object type we're initializing is not $49 (as in it's $4A),
     ; then we'll make 4 traps.
-    ;
     CMP ObjType, X
     BEQ @LoopTrap
     LDY #$03
+
 @LoopTrap:
     ; Loop over each trap to make, from the last index (5 or 3) to 0.
-    ;
     TYA
     CLC
+
     ; Add the loop index to the current object slot, and switch the X register to it.
-    ;
     ADC CurObjIndex
     TAX
+
     ; Look up and set the location for this iteration's individual trap.
-    ;
     LDA TrapXs, Y
     STA ObjX, X
     LDA TrapYs, Y
@@ -2459,21 +2459,21 @@ TrapAllowedDirs:
 UpdateTrap_Full:
     LDA ObjState, X
     BNE @UpdateMovingStates
+
     ; State 0. Sensing.
     ;
     ; If the absolute vertical distance between Link and the trap >= $E,
     ; then go see if the horizontal distance is shorter.
-    ;
     LDA ObjY
     SEC
     SBC ObjY, X
     JSR Abs
     CMP #$0E
     BCS @CheckHorizontal
+
     ; Determine the horizontal direction toward Link;
     ; and if Link and the trap are at the same X, then we can't move
     ; along this axis. Go see about moving vertically.
-    ;
     LDY #$01
     LDA ObjX
     CMP ObjX, X
@@ -2482,24 +2482,25 @@ UpdateTrap_Full:
     LDY #$02
 :
     ; Remember the original X coordinate.
-    ;
     LDA ObjX, X
+
 @GoToState1:
     STA ObjMovingLimit, X
+
     ; Set facing direction to the horizontal one that we determined.
-    ;
     TYA
     STA ObjDir, X
+
     ; If the direction we determined is not allowed for this trap, then
     ; go draw and check collisions.
-    ;
     AND TrapAllowedDirs-1, X
     BEQ @DrawAndCheckCollisions
+
     ; Advance to state 1 with q-speed $70 (1.75 pixels a frame) (fast).
-    ;
     INC ObjState, X
     LDA #$70
     STA ObjQSpeedFrac, X
+
 @DrawAndCheckCollisions:
     JMP L_Trap_DrawAndCheckCollisions
 
@@ -2507,17 +2508,16 @@ UpdateTrap_Full:
     ; If the horizontal distance between Link and the trap >= $E,
     ; then this trap definitely wasn't triggered.
     ; Go draw and check collisions.
-    ;
     LDA ObjX
     SEC
     SBC ObjX, X
     JSR Abs
     CMP #$0E
     BCS @DrawAndCheckCollisions
+
     ; Determine the vertical direction toward Link;
     ; and if Link and the trap are at the same Y, then we can't move
     ; along this axis. Go draw and check object collisions.
-    ;
     LDY #$04
     LDA ObjY
     CMP ObjY, X
@@ -2527,69 +2527,68 @@ UpdateTrap_Full:
 :
     ; We'll advance to state 1. Go remember the original Y coordinate,
     ; set the vertical direction we determined, and other preparations.
-    ;
     LDA ObjY, X
     BNE @GoToState1
+
 @UpdateMovingStates:
     ; State 1 and 2.
     ;
     ; Move in the direction it's facing.
-    ;
     LDA ObjDir, X
     STA $0F
     JSR MoveObject
+
     ; Truncate the grid offset to square length ($10).
-    ;
     LDA ObjGridOffset, X
     AND #$0F
     BNE :+
     STA ObjGridOffset, X
 :
     ; The trap cannot be harmed. So, only check for collision with Link.
-    ;
     JSR CheckLinkCollision
+
     ; If moving horizontally, then set target coordinate in [00] to $78
     ; and current coordinate to the trap's X.
-    ;
     LDY ObjX, X
     LDA #$78
     STA $00
     LDA ObjDir, X
     AND #$0C
     BEQ @Finish
+
     ; Else moving vertically. Set target coordinate in [00] to $90
     ; and current coordinate to the trap's Y.
-    ;
     LDY ObjY, X
     LDA #$90
     STA $00
+
 @Finish:
     ; If in state 2, then go finish handling it.
-    ;
     LDA ObjState, X
     AND #$01
     BEQ @FinishState2
+
     ; Finish handling state 1.
     ;
     ; Get the distance between the current coordinate and the target.
-    ;
     TYA
     SEC
     SBC $00
     JSR Abs
+
     ; If distance >= 5, go draw.
-    ;
     CMP #$05
     BCS @Draw
+
     ; Else reverse direction, and advace to state 2
     ; with q-speed $20 (0.5 pixels a frame) (slow).
-    ;
     LDA ObjDir, X
     JSR GetOppositeDir
     STA ObjDir, X
     LDA #$20
     STA ObjQSpeedFrac, X
     INC ObjState, X
+
 @Draw:
     JMP L_Trap_DrawAndCheckCollisions
 
@@ -2597,21 +2596,21 @@ UpdateTrap_Full:
     ; Finish handling state 2.
     ;
     ; If the current coordinate = original coordinate, then go to state 0.
-    ;
     TYA
     CMP ObjMovingLimit, X
     BNE L_Trap_DrawAndCheckCollisions
     LDA #$00
     STA ObjState, X
+
 L_Trap_DrawAndCheckCollisions:
     JMP Person_DrawAndCheckCollisions_Common
 
 UpdateRupeeStash_Full:
     TXA                         ; Save the current object slot.
     PHA
+
     ; If Link is not close enough (< 9 pixels in both axes), then
     ; go draw.
-    ;
     LDA ObjY
     SEC
     SBC ObjY, X
@@ -2624,24 +2623,24 @@ UpdateRupeeStash_Full:
     JSR Abs
     CMP #$09
     BCS @DrawRupee
+
     ; Else Link is close enough. Add 1 rupee, and destroy this object.
-    ;
     JSR TakeOneRupee
     JSR DestroyMonster
+
     ; Once you've taken one, it counts as taking them all
     ; once you leave the room.
-    ;
     LDA #$00
     STA RoomObjCount
     JMP @ExitRestoreX
 
 @DrawRupee:
     ; Draw a rupee.
-    ;
     JSR Anim_FetchObjPosForSpriteDescriptor
     LDX #$16                    ; Rupee item slot
     LDY #$16                    ; Rupee item slot
     JSR DrawItemInInventory
+
 @ExitRestoreX:
     PLA                         ; Restore the current object slot.
     TAX
@@ -2676,7 +2675,6 @@ UpdateRupeeStash_Full:
     .BYTE $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
     .BYTE $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
     .BYTE $FF, $FF, $FF, $FF, $FF
-
 CommonCodeBlock_Bank1:
 
 .SEGMENT "BANK_01_CODE"
@@ -2816,6 +2814,7 @@ CommonCodeBlock_Bank1:
 .EXPORT World_ChangeRupees
 .EXPORT WriteBlankPrioritySprites
 
+
 ; Returns:
 ; A: 0
 ;
@@ -2823,6 +2822,7 @@ BeginUpdateMode:
     LDA #$00
     STA GameSubmode
     INC IsUpdatingMode
+
 L6506_Exit:
     RTS
 
@@ -2839,17 +2839,18 @@ World_ChangeRupees:
     BNE L6506_Exit              ; If a static transfer buf is already chosen, then return.
     LDA DynTileBuf
     BPL L6506_Exit              ; If the dynamic transfer buf is already used, then return.
+
     ; Reset RupeesToAdd or RupeesToSubtract as appropriate,
     ; if reached 0 or max.
     ;
     ; Index of RupeesToSubtract item slot.
-    ;
     LDY #$27
     LDA InvRupees
     BEQ @ResetSlot
     LDY #$26                    ; Index of RupeesToAdd item slot.
     CMP #$FF
     BNE :+                      ; If 0 < rupees < $FF, don't reset anything.
+
 @ResetSlot:
     LDA #$00                    ; Reset the slot we chose.
     STA Items, Y
@@ -2861,10 +2862,12 @@ World_ChangeRupees:
     BEQ @CheckSubtract          ; If RupeesToAdd <> 0,
     DEC RupeesToAdd             ; then add one rupee.
     INC InvRupees
+
     ; Play "heart taken" tune, probably because it's more
     ; pleasing for a continuous process than "rupee taken".
     LDA #$10
     STA Tune0Request
+
 @CheckSubtract:
     LDA RupeesToSubtract
     BEQ FormatStatusBarText     ; If RupeesToSubtract = 0, then skip it, and go format header text.
@@ -2872,6 +2875,7 @@ World_ChangeRupees:
     DEC InvRupees               ; Subtract one rupee.
     LDA #$10                    ; Play the tune for this.
     STA Tune0Request
+
 FormatStatusBarText:
     LDY #$28                    ; Copy transfer buf template for status bar text to dynamic buf.
 :
@@ -2905,6 +2909,7 @@ FormatStatusBarText:
     LDX #$08
     LDA InvKeys
     JSR FormatDecimalCountByteInTextBuf
+
 @FormatBombCount:
     LDX #$0E
     LDA InvBombs
@@ -2917,6 +2922,7 @@ FormatStatusBarText:
 FormatDecimalCountByteInTextBuf:
     STY $00
     JSR FormatDecimalCountByte
+
 ; Params:
 ; [$00]: offset to first character in buffer
 ;
@@ -2954,6 +2960,7 @@ FormatDecimalCountByte:
     CMP #$24
     BNE :+
     LDA $03
+
 ; Params:
 ; A: character
 ;
@@ -2971,6 +2978,7 @@ FormatCharDoublet:
 PlaySample:
     LDY #$01
     BNE :+
+
 PlayEffect:
     LDY #$03
 :
@@ -2980,37 +2988,37 @@ PlayEffect:
 
 InitModeB_EnterCave_Bank5:
     ; Save the submode.
-    ;
     LDA GameSubmode
     PHA
     JSR InitMode_EnterRoom
     JSR ResetInvObjState
+
     ; Put Link at the cave entrance ($70, $DD), and facing up.
-    ;
     LDA #$70
     STA ObjX
     LDA #$DD
     STA ObjY
     LDA #$08
+
 FileBChecksums:
     STA ObjDir
     JSR Link_EndMoveAndAnimate
     JSR RunCrossRoomTasksAndBeginUpdateMode_PlayModesNoCellar
+
     ; Restore the submode.
-    ;
     PLA
     STA GameSubmode
+
     ; Still initializing. A routine called here changed it.
-    ;
     LDA #$00
     STA IsUpdatingMode
     INC GameSubmode
+
     ; Get Link ready to move automatically this number of pixels.
-    ;
     LDA #$30
     STA ObjGridOffset
+
     ; When coming out of the cave eventually, this has to be set.
-    ;
     LDA #$01
     STA UndergroundExitType
     RTS
@@ -3061,6 +3069,7 @@ FetchFileAAddressSet:
     DEY
     BPL :-
     TAY
+
     ; Copy the save file address set (14 bytes) for the current
     ; save file to [$00] to make it easier to work with.
     LDX #$0D
@@ -3070,9 +3079,9 @@ FetchFileAAddressSet:
     DEY
     DEX
     BPL :-
+
     ; Put the address of the profile's whole
     ; WorldFlags block in [$0E:0F].
-    ;
     LDA #<WorldFlags
     STA $0E
     LDA #>WorldFlags
@@ -3112,11 +3121,13 @@ HideObjectSprites:
 
 CycleCurSpriteIndex:
     LDA RollingSpriteIndex      ; From 0 to $27.
+
 CycleSpriteIndexInA:
     CLC
     ADC #$01
     CMP #$28
     BNE :+
+
 ResetCurSpriteIndex:
     LDA #$00
 :
@@ -3162,6 +3173,7 @@ FormatDecimalByte:
     CMP #$00
     BNE @WriteHighChars
     TYA
+
 @WriteHighChars:
     STA $02
     STY $01
@@ -3177,12 +3189,14 @@ FormatDecimalByte:
 ;
 DivideBy10:
     LDY #$00
+
 @Loop:
     CMP #$0A
     BCC :-
     SBC #$0A
     INY
     BNE @Loop
+
 FormatHeartsInTextBuf:
     ; [$0E]: hearts value
     ; [$0F]: heart partial
@@ -3216,24 +3230,25 @@ FormatHeartsInTextBuf:
     SEC
     SBC $01
     STA $01
+
     ; At this point,
     ; [$00] = $F - hearts
     ; [$01] = $F - heart containers
     ; [$0D] = Y parameter (starting offset in tile buf)
     ;
     ; Also, Y is still set to the value passed in.
-    ;
     LDX #$00
     TYA
     CLC
     ADC #$07
     STA $0B                     ; Set [$0B] to offset of last heart in top row.
+
     ; Y keeps track of index of heart in row.
     ; Start at the end of the first row.
     LDY #$07
+
 @LoopHeartSlot:
     ; For X in 0..$10 (all hearts spots):
-    ;
     CPY #$FF
     BNE @FinishedFirstRow       ; If finished first row,
     LDA $0D
@@ -3241,6 +3256,7 @@ FormatHeartsInTextBuf:
     ADC #$12
     STA $0B                     ; Set [$0B] to offset of last heart in bottom row.
     LDY #$12
+
 @FinishedFirstRow:
     ; If there are no hearts,
     ; or still processing missing heart containers;
@@ -3248,16 +3264,20 @@ FormatHeartsInTextBuf:
     BEQ @EmitSpace
     CPX $01
     BCS @CheckOccupiedSlot
+
 @EmitSpace:
     LDA #$24                    ; Use a blank tile.
     BNE @EmitChar               ; Go emit it.
+
 @CheckOccupiedSlot:
     CPX $00
     BEQ @CheckPartial           ; At the boundary heart, go check the partial heart.
     BCC @EmitEmptyHeart         ; If no longer processing missing hearts,
+
 @EmitFullHeart:
     LDA #$F2                    ; Use a full heart tile.
     BNE @EmitChar               ; Go emit it.
+
 @CheckPartial:
     LDA $0F
     BEQ @EmitEmptyHeart         ; If partial heart is 0, go emit an empty heart tile.
@@ -3267,8 +3287,10 @@ FormatHeartsInTextBuf:
     STA ForceSwordShot          ; else, clear [$0529]
     LDA #$65                    ; and use a half heart tile.
     BNE @EmitChar
+
 @EmitEmptyHeart:
     LDA #$66                    ; Use an empty heart tile.
+
 @EmitChar:
     STY $0C
     LDY $0B                     ; Emit chosen tile to buf.
@@ -3299,6 +3321,7 @@ ShowLinkSpritesBehindHorizontalDoors:
     LDA ObjX, X
     STA $00
     LDX #$01
+
 @LoopSprite:
     LDA $00
     CLC
@@ -3307,10 +3330,12 @@ ShowLinkSpritesBehindHorizontalDoors:
     BCS @AddPriority
     CMP #$10
     BCS @NextSprite
+
 @AddPriority:
     LDA Sprites+64, Y
     ORA #$20
     STA Sprites+64, Y
+
 @NextSprite:
     INY
     INY
@@ -3338,9 +3363,9 @@ BoundDirectionHorizontally:
     STA $00                     ; [00] holds X coordinate
     CPX #$00
     BEQ @Left
+
     ; If object slot >= $D (items and weapons) or object type = $5C (boomerang),
     ; then add $B to X coordinate.
-    ;
     CPX #$0D
     BCS :+
     LDA ObjType, X
@@ -3351,17 +3376,17 @@ BoundDirectionHorizontally:
     CLC
     ADC #$0B
     STA $00
+
 @Left:
     ; Check left boundary.
     ; If X coordinate crosses (<) left bound, go reset the direction.
-    ;
     LDA $00
     CMP RoomBoundLeft
     BCC BoundDirectionReturn
+
     ; If object is not the player and (slot >= $D or type = $5C),
     ; then subtract $17 from X coordinate in order to check the
     ; right bound.
-    ;
     CPX #$00
     BEQ @Right                  ; If object is the player, skip this.
     CPX #$0D
@@ -3374,19 +3399,19 @@ BoundDirectionHorizontally:
     SEC
     SBC #$17
     STA $00
+
 @Right:
     ; Check right boundary.
     ; If X coordinate is within (<) right bound, return and leave direction alone.
-    ;
     LDY #$01
     LDA $00
     CMP RoomBoundRight
     BCC L6825_Exit
+
 BoundDirectionReturn:
     ; If the reference direction in Y register is 0, then
     ; return and leave direction alone.
     ; Else reset the target direction.
-    ;
     TYA
     AND $0F
     BEQ L6825_Exit
@@ -3406,9 +3431,9 @@ BoundDirectionVertically:
     STA $00                     ; [00] holds Y coordinate
     CPX #$00
     BEQ @Up
+
     ; If object slot >= $D (items and weapons) or object type = $5C (boomerang),
     ; then add $F to X coordinate.
-    ;
     CPX #$0D
     BCS :+
     LDA ObjType, X
@@ -3419,17 +3444,17 @@ BoundDirectionVertically:
     CLC
     ADC #$0F
     STA $00
+
 @Up:
     ; Check up boundary.
     ; If Y coordinate crosses (<) up bound, go reset the direction.
-    ;
     LDA $00
     CMP RoomBoundUp
     BCC BoundDirectionReturn
+
     ; If object is not the player and (slot >= $D or type = $5C),
     ; then subtract $21 from Y coordinate in order to check the
     ; down bound.
-    ;
     CPX #$00
     BEQ @Down                   ; If object is the player, skip this.
     CPX #$0D
@@ -3442,14 +3467,15 @@ BoundDirectionVertically:
     SEC
     SBC #$21
     STA $00
+
 @Down:
     ; Check down boundary.
     ; If Y coordinate is within (<) down bound, return and leave direction alone.
-    ;
     LDY #$04
     LDA $00
     CMP RoomBoundDown
     BCS BoundDirectionReturn    ; If Y coordinate crosses (>=) right boundary, go reset target direction.
+
 L6825_Exit:
     RTS
 
@@ -3465,6 +3491,7 @@ L6825_Exit:
 ;
 BoundByRoomWithA:
     STA $0F
+
 ; Params:
 ; X: object index
 ; [0F]: direction
@@ -3494,6 +3521,7 @@ AddQSpeedToPositionFraction:
     ADC ObjQSpeedFrac, X
     STA ObjPosFrac, X
     PHP                         ; Save carry flag.
+
     ; Don't let positions go past the limits
     ; If we're at a limit, then clear carry.
     LDA ObjGridOffset, X
@@ -3501,6 +3529,7 @@ AddQSpeedToPositionFraction:
     BEQ @ClearCarry
     CMP NegativeGridCellSize
     BNE :+
+
 @ClearCarry:
     PLP                         ; Replace saved (pushed) carry flag with 0.
     CLC
@@ -3508,6 +3537,7 @@ AddQSpeedToPositionFraction:
 :
     PLP                         ; Restore carry flag to use in addition below.
     PHP                         ; But save it again in order to return it at the end.
+
     ; Add only carry to the grid offset.
     ; Carry represents whether the fractional position reached
     ; a whole pixel (C=1).
@@ -3530,6 +3560,7 @@ SubQSpeedFromPositionFraction:
     SBC ObjQSpeedFrac, X
     STA ObjPosFrac, X
     PHP                         ; Save carry flag.
+
     ; Don't let positions go past the limits
     ; If we're at a limit, then set carry.
     LDA ObjGridOffset, X
@@ -3537,6 +3568,7 @@ SubQSpeedFromPositionFraction:
     BEQ @SetCarry
     CMP NegativeGridCellSize
     BNE :+
+
 @SetCarry:
     PLP                         ; Replace saved (pushed) carry flag with 1.
     SEC
@@ -3544,6 +3576,7 @@ SubQSpeedFromPositionFraction:
 :
     PLP                         ; Restore carry flag to use in addition below.
     PHP                         ; But save it again in order to return it at the end.
+
     ; Subtract only carry from the grid offset.
     ; Carry represents whether the fractional position reached
     ; a whole pixel (C=0).
@@ -3570,6 +3603,7 @@ OppositeDirs:
 ;
 GetOppositeDir:
     LDY #$03
+
 @Loop:
     LSR
     BCS :+
@@ -3587,6 +3621,7 @@ GetOppositeDir:
 ;
 Abs:
     BPL :+
+
 ; Params:
 ; A: value
 ;
@@ -3611,20 +3646,19 @@ Negate:
 ;
 MoveShot:
     ; If a boundary was crossed, go set [0E] to $80 instead of moving.
-    ;
     JSR BoundByRoomWithA
     BEQ @ReturnBlocked
+
     ; Move the object as if grid offset were 0.
-    ;
     LDA ObjGridOffset, X
     PHA
     LDA #$00
     STA ObjGridOffset, X
     JSR MoveObject
     PLA
+
     ; If [0E] is set, keep the original value in grid offset,
     ; or else add the new amount to it.
-    ;
     LDY $0E
     BNE :+
     CLC
@@ -3652,7 +3686,6 @@ MoveShot:
 ;
 GetDirectionsAndDistancesToTarget:
     ; Handle the horizontal.
-    ;
     PHA
     TAY
     LDA #$02
@@ -3663,8 +3696,8 @@ GetDirectionsAndDistancesToTarget:
     STA $03
     LDA $0A
     STA $0B
+
     ; Handle the vertical.
-    ;
     PLA
     TAY
     LDA #$08
@@ -3691,13 +3724,13 @@ _CalcDiagonalSpeedIndex:
     ; right speed index to use incrementally.
     ; Lower speed indexes yield faster X speeds and lower Y speeds.
     ; Higher speed indexes yield faster Y speeds and lower X speeds.
-    ;
     STY $00
+
     ; Assuming horizontal distance >= vertical distance, the
     ; index offset in [01] is negative (-1) to go towards the X axis.
-    ;
     LDA #$FF
     STA $01
+
     ; TODO:
     ; If horizontal distance [03] < vertical distance [04], swap [03] and [04],
     ; and store positive speed index 1 in [01] to go towards the Y axis.
@@ -3705,7 +3738,6 @@ _CalcDiagonalSpeedIndex:
     ; The point is to put the greater value in [03] and the lesser one in [04],
     ; and use a speed index offset (1 or -1) that will point us in the direction
     ; of the farther distance faster.
-    ;
     LDA $03
     CMP $04
     BCS @Swap
@@ -3716,44 +3748,44 @@ _CalcDiagonalSpeedIndex:
     STA $04
     LDA #$01
     STA $01
+
 @Swap:
     ; TODO: call it speed index or angle?
     ; If the difference in distances is within 8 pixels,
     ; return the speed index (angle) we have.
-    ;
     LDA $03
     SEC
     SBC $04
     CMP #$08
     BCC @Return
+
 @Turn:
     ; TODO: call it speed index or angle?
     ; Otherwise, go to the next speed index (angle).
-    ;
     LDA $00
     CLC
     ADC $01
     STA $00
+
     ; TODO: call it speed index or angle?
     ; If a speed index (angle) limit (0 or 8), we've gone all the way to an axis
     ; (0, 90, 180, 270 degrees). So return this speed index (angle).
-    ;
     BEQ @Return
     CMP #$08
     BEQ @Return
+
     ; Subtract the lesser distance from the greater distance.
     ; If they still haven't crossed, then we can turn more.
-    ;
     LDA $03
     SEC
     SBC $04
     STA $03
     CMP $04
     BCS @Turn
+
 @Return:
     ; TODO: call it speed index or angle?
     ; Return the speed index (angle) we found.
-    ;
     LDY $00
     RTS
 
@@ -3762,22 +3794,23 @@ _CalcDiagonalSpeedIndex:
 ;
 SetBoomerangSpeed:
     STA ObjQSpeedFrac, X
+
     ; If in major state $50, use this speed as is.
-    ;
     LDA ObjState, X
     AND #$F0
     CMP #$40
     BNE @Exit
+
     ; Else, in major state $40, go at half the speed.
-    ;
     LSR ObjQSpeedFrac, X
+
     ; Once we've traveled the target amount of time, set state $50 to go faster.
     ; In major state $40, ObjMovingLimit is a timer to change the state to $50.
-    ;
     DEC ObjMovingLimit, X
     BNE @Exit
     LDA #$50
     STA ObjState, X
+
 @Exit:
     RTS
 
@@ -3798,7 +3831,6 @@ GetOneDirectionAndDistanceToTarget:
     ; to flip it.
     ;
     ; After this, [02] will >= [01].
-    ;
     STA $01
     STY $02
     CPY $01
@@ -3806,9 +3838,9 @@ GetOneDirectionAndDistanceToTarget:
     STA $02
     STY $01
     LSR $0A
+
 @Subtract:
     ; If the difference between the coordinates < 9, increment [00].
-    ;
     LDA $02
     SEC
     SBC $01
@@ -3820,33 +3852,32 @@ GetOneDirectionAndDistanceToTarget:
 
 WieldBomb:
     ; If there are no bombs in inventory, return.
-    ;
     LDA InvBombs
     BEQ :-
+
     ; Look in slot $10. If it's empty or there's a fire
     ; (state = 0, or major state <> $10), then
     ; go activate a bomb.
-    ;
     LDX #$10
     LDA ObjState, X
     BEQ @FoundSlot
     AND #$F0
     CMP #$10
     BNE @FoundSlot
+
     ; Else look at slot $11.
     ; If there's a bomb there (major state = $10), then return.
-    ;
     INX
     LDA ObjState, X
     BEQ @FoundSlot
     AND #$F0
     CMP #$10
     BEQ L69AB_Exit
+
 @FoundSlot:
     ; We found a slot that's empty or has a fire. It could be $10 or $11.
     ; If the other slot has a bomb that's not yet detonating (state < $13),
     ; then return.
-    ;
     TXA
     EOR #$01
     TAY
@@ -3854,39 +3885,42 @@ WieldBomb:
     BEQ @Activate
     CMP #$13
     BCC L69AB_Exit
+
 @Activate:
     ; We're using a bomb. Decrement the count.
-    ;
     DEC InvBombs
+
     ; Play the "set a bomb" tune.
-    ;
     LDA #$20
     STA Tune0Request
+
     ; Reset the object timer.
-    ;
     LDA #$00
     STA ObjTimer, X
+
     ; Start in state $11.
-    ;
     LDA #$11
+
 ; Params:
 ; A: initial state
 ; X: object index
 ;
 PlaceWeaponForPlayerStateAndAnimAndWeaponState:
     STA ObjState, X
+
 PlaceWeaponForPlayerStateAndAnim:
     ; Set player's animation counter to 1, so that it will roll over
     ; as soon as possible, causing movement frame to become 0 (legs apart),
     ; which is how we want to end item-use animations.
     ;
     ; Set player's state to $10 (wielding sword/item).
-    ;
     LDA #$01
     STA ObjAnimCounter
+
 PlaceWeaponForPlayerState:
     LDA #$10
     STA ObjState
+
 ; Places the weapon $10 pixels away from the player in the
 ; player's direction.
 ;
@@ -3898,27 +3932,27 @@ PlaceWeapon:
     ; Set the offset choices to:
     ;  $10 for right and down in [01]
     ; -$10 for left and up in [02]
-    ;
     LDY #$F0
     STA $01
     STY $02
+
     ; Set object's direction to the player's.
-    ;
     LDA ObjDir
     STA ObjDir, X
+
     ; Set object's X to player's X + offset for direction.
-    ;
     JSR ChooseOffsetForDirectionH
     ADC ObjX
     STA ObjX, X
+
     ; Set object's Y to player's Y + offset for direction.
-    ;
     LDA ObjDir
     LSR                         ; Shift player's direction, so that it behaves like a horizontal if it's vertical.
     LSR
     JSR ChooseOffsetForDirectionH
     ADC ObjY
     STA ObjY, X
+
 L69AB_Exit:
     RTS
 
@@ -3933,7 +3967,6 @@ L69AB_Exit:
 ;
 ChooseOffsetForDirectionH:
     ; Set default value 0 in default address 0.
-    ;
     LDY #$00
     STY $00
     AND #$03
@@ -3942,9 +3975,11 @@ ChooseOffsetForDirectionH:
     AND #$01
     BNE @GetValue               ; If direction is right, go choose slot 1.
     INY                         ; Direction is left. Increment index to 2.
+
 @GetValue:
     LDA $0000, Y                ; Load the offset for the calculated index.
     CLC                         ; Clear carry in preparation for adding offset to another value.
+
 L69BE_Exit:
     RTS
 
@@ -3959,16 +3994,15 @@ WieldCandle:
     ;
     ; Note that it's possible that we fail to find an empty slot,
     ; but the caller might find slot X occupied by a fire made earlier.
-    ;
     LDX #$10
     LDA ObjState, X
     BEQ @NotInUse
     INX
     LDA ObjState, X
     BNE L69BE_Exit
+
 @NotInUse:
     ; If we have the blue candle and it was used, then return.
-    ;
     LDA InvCandle
     CMP #$01
     BNE :+
@@ -3976,25 +4010,24 @@ WieldCandle:
     BNE L69BE_Exit
 :
     ; Set the candle used.
-    ;
     LDA #$01
     STA UsedCandle
+
     ; Reset the new fire object's movement info.
     ; Set quarter speed (q-speed) to $20 (half a pixel a frame).
-    ;
     LDA #$00
     STA ObjGridOffset, X
     STA ObjPosFrac, X
     LDA #$20
     STA ObjQSpeedFrac, X
+
     ; Activate the fire object. Initial state = $21 (moving fire).
-    ;
     LDA #$21
     STA ObjState, X
     LDA #$04                    ; Flame sound effect
     JSR PlayEffect
+
     ; Each animation frame lasts 4 frames.
-    ;
     LDA #$04
     STA ObjAnimCounter, X
     JSR PlaceWeaponForPlayerState
@@ -4006,6 +4039,7 @@ WieldCandle:
 ;
 GetShortcutOrItemXY:
     LDY RoomId
+
 ; Params:
 ; Y: room ID
 ;
@@ -4051,24 +4085,23 @@ DestroyObject_WRAM:
 
 UpdateBombFlashEffect:
     ; If state <> $13, return.
-    ;
     LDA ObjState, X
     CMP #$13
     BNE @Exit
+
     ; The effect involves turning grayscale rendering on and off
     ; in PPUMASK.
     ;
     ; Start by setting A register to the PPU mask shifted right to
     ; throw away the grayscale bit.
-    ;
     LDA CurPpuMask_2001
     LSR
+
     ; Then, based on the timer value, shift in a 1 or 0 in the low bit.
-    ;
     LDY ObjTimer, X
+
     ; At times $16 and $11, rotate carry=1 to the low bit.
     ; Carry will have been set, because of the comparison (CPY).
-    ;
     CPY #$16
     BEQ :+
     CPY #$11
@@ -4079,18 +4112,18 @@ UpdateBombFlashEffect:
 
 @Clear:
     ; At times $12 and $D, shift left to make the low bit 0.
-    ;
     CPY #$12
     BEQ :+
     CPY #$0D
     BNE @Exit
 :
     ASL
+
 @SetMask:
     ; Only at times $16, $11, $12, $D do we commit the mask
     ; we calculated.
-    ;
     STA CurPpuMask_2001
+
 @Exit:
     RTS
 
@@ -4102,6 +4135,7 @@ UpdatePlayerPositionMarker:
     BNE L6AAF_Exit
     LDA RoomId
     LDX #$00
+
 ; Params:
 ; A: room ID
 ;
@@ -4150,10 +4184,13 @@ UpdatePositionMarker:
     PLA
     LDA #$02                    ; switch between two palettes.
     PHA
+
 @PopSetAttr:
     PLA
+
 @SetAttr:
     STA Sprites+86, X
+
 L6AAF_Exit:
     RTS
 
@@ -4173,6 +4210,7 @@ UpdateWorldCurtainEffect:
     BNE @Exit                   ; Delay until ObjTimer[0] expires.
     LDA #$01                    ; Start with column index in [$7D] ObjX[$D].
     STA $0A
+
 @LoopColumn:
     LDX $0A
     LDA ObjX+12, X              ; Get current column index.
@@ -4190,6 +4228,7 @@ UpdateWorldCurtainEffect:
     STA ObjTimer
     DEC ObjX+12                 ; Change the column indexes.
     INC ObjX+13
+
 @Exit:
     RTS
 
@@ -4202,6 +4241,7 @@ UpdateWorldCurtainEffect:
 ;
 Add1ToInt16At0:
     LDA #$01
+
 ; Params:
 ; A: value 1
 ; [$00:01]: value 2
@@ -4224,6 +4264,7 @@ AddToInt16At0:
 ;
 Add1ToInt16At2:
     LDA #$01
+
 ; Params:
 ; A: value 1
 ; [$02:03]: value 2
@@ -4244,6 +4285,7 @@ AddToInt16At2:
 ; [$04:05]: a 16-bit value to increment
 Add1ToInt16At4:
     LDA #$01
+
 ; Params:
 ; A: value 1
 ; [$04:05]: value 2
@@ -4343,27 +4385,27 @@ LinkColors_CommonCode:
 
 TryTakeRoomItem:
     ; If Link is halted, then return.
-    ;
     LDA ObjState
     AND #$C0
     CMP #$40
     BEQ :-
+
     ; If player took the room item, then return.
-    ;
     JSR GetRoomFlagUWItemState
     BNE :-
+
     ; Switch to room item object slot $13.
-    ;
     LDX #$13
+
     ; If room item object wasn't activated, then return.
-    ;
     LDA ObjState, X
     BMI :-
+
     ; Pass RoomItemId, also known as [98][$13] and ObjDir[$13],
     ; to try to take the item.
-    ;
     LDA ObjRoomItemId, X
     STA $04                     ; [04] holds the item type.
+
 ; Params:
 ; X: object index
 ; [04]: item type
@@ -4376,8 +4418,8 @@ TryTakeItem:
     LDA Item_ObjItemLifetime, X
     CMP #$F0
     BCS L6C28_Exit
+
     ; If Y distance between Link and the item >= 9, return.
-    ;
     LDA ObjY
     CLC
     ADC #$03
@@ -4386,27 +4428,28 @@ TryTakeItem:
     JSR Abs
     CMP #$09
     BCS L6C28_Exit
+
     ; If X distance between Link and the item >= 9, return.
-    ;
     LDA ObjX
     SEC
     SBC ObjX, X
     JSR Abs
     CMP #$09
     BCS L6C28_Exit
+
     ; In case this is the room item, set state to $FF to deactivate it.
-    ;
     LDA #$FF
     STA ObjState, X
     STA ObjY, X
+
     ; If it is the room item that is taken, then
     ; mark it taken in room flags.
-    ;
     CPX #$13
     BNE :+
     JSR SetRoomFlagUWItemState
 :
     LDA $04                     ; Get the item type.
+
 ; Params:
 ; A: item ID
 ;
@@ -4415,9 +4458,9 @@ TryTakeItem:
 TakeItem:
     LDX #$08
     STX Tune1Request
+
     ; Unless it's the Triforce of Power; in which case
     ; play the "item appears" tune.
-    ;
     CMP #$0E
     BNE :+
     LDX #$02
@@ -4425,7 +4468,6 @@ TakeItem:
 :
     ; If we're in a cave or cellar, then
     ; prepare to lift the item.
-    ;
     LDX GameMode
     CPX #$05
     BEQ @SkipLift
@@ -4434,31 +4476,31 @@ TakeItem:
     LDX #$08                    ; Play the "item" song.
     STX SongRequest
     STA ItemTypeToLift          ; Set the item type for lifting.
+
 @SkipLift:
     ; Look up the item slot and sprite attributes by the item type.
-    ;
     TAX
     LDA ItemIdToSlot, X
     TAY
     LDA ItemIdToDescriptor, X
+
     ; [0A] holds the item value from the low nibble of descriptor.
-    ;
     PHA
     AND #$0F
     STA $0A
     PLA
+
     ; Check the high nibble which specifies the item's class.
     ;
     ; A: item class
     ; X: item type
     ; Y: item slot
-    ;
     AND #$F0
     BNE CheckClass1             ; Go check classes 1 and 2.
+
     ; Class 0. We have an item of a type that's unique or complex.
     ;
     ; First, check the exceptions. If the item is a map, compass, or triforce; then go handle them.
-    ;
     CPY #$11                    ; Map item slot
     BEQ TakeClass0Complex
     CPY #$10                    ; Compass item slot
@@ -4467,17 +4509,18 @@ TakeItem:
     BEQ TakeClass0Complex
     CPY #$1B                    ; Triforce of Power item slot
     BEQ TakeClass0Complex
+
     ; Finally, this is a simple item. Put the item value in the item slot.
-    ;
     LDA $0A
+
 SetItemValue:
     STA Items, Y
+
 L6C28_Exit:
     RTS
 
 Take5Rupees:
     ; For 5 Rupees, perform the action for 1 rupee 5 times.
-    ;
     LDY #$04
 :
     JSR TakeOneRupee
@@ -4489,12 +4532,11 @@ CheckClass1:
     ; A: item class
     ; X: item type
     ; Y: item slot
-    ;
     CMP #$10
     BNE @CheckClass2            ; Go check class 2 items.
+
     ; Class 1. We have a type of item with an amount.
     ; Item value is the amount to add.
-    ;
     CPY #$18                    ; Heart container item slot
     BEQ @TakeHeartContainer
     CPY #$1C                    ; 5 Rupees item slot
@@ -4503,29 +4545,28 @@ CheckClass1:
     BEQ @TakeRupee
     CPY #$19                    ; Heart item slot
     BEQ TakeHearts
+
     ; For key item slot, play the tune here.
     ; Add to the amount below.
-    ;
     CPY #$17
     BNE :+
     JSR PlayKeyTakenTune
 :
     ; For fairy item slot, go handle it where hearts are increased.
-    ;
     CPY #$14
     BEQ TakeHeartsNoSound
+
     ; Keys and other items.
     ; Add item value and value in item slot.
-    ;
     LDA $0A
     CLC
     ADC Items, Y
     BCC :+                      ; If the sum overflowed,
+
 @SetItemValueFF:
     LDA #$FF                    ; then cap it at $FF.
 :
     ; For potion item slot, cap it at 2.
-    ;
     CPY #$07
     BNE :+
     CMP #$03
@@ -4533,7 +4574,6 @@ CheckClass1:
     LDA #$02
 :
     ; For bomb item slot, cap it at MaxBombs.
-    ;
     CPY #$01
     BNE :+
     CMP MaxBombs
@@ -4545,7 +4585,6 @@ CheckClass1:
 @TakeHeartContainer:
     ; For heart containers, cap at $10.
     ; Add a heart container and a heart.
-    ;
     LDA Items, Y
     CMP #$F0
     BCS L6C28_Exit              ; If we already have max hearts, return.
@@ -4558,17 +4597,16 @@ CheckClass1:
 @CheckClass2:
     ; Make sure this is an item of a type ordered by grade.
     ; Then go handle it.
-    ;
     CMP #$20
     BNE @SetItemValueFF         ; If the class is $30, go set item value to $FF.
     BEQ HandleClass2
+
 TakeClass0Complex:
     ; We're taking a class 0 complex item found in UW.
     ;
     ; A: item class
     ; X: item type
     ; Y: item slot
-    ;
     LDA CurLevel
     BEQ @Exit                   ; If in OW, return.
     CPY #$1B                    ; Triforce of Power item slot
@@ -4579,7 +4617,6 @@ TakeClass0Complex:
     STX StatusBarMapTrigger
 :
     ; Choose the right slot for the level. (map/map9, compass/compass9)
-    ;
     SEC
     SBC #$01                    ; Subtract one from level number to base it on 0.
     CMP #$08
@@ -4589,18 +4626,19 @@ TakeClass0Complex:
 :
     AND #$07                    ; Make sure the level index is in the range 0 to 8.
     TAX
+
     ; Combine the mask for this level with the mask in the item slot.
-    ;
     LDA Items, Y
     ORA LevelMasks, X
     STA Items, Y
+
     ; If the item taken was a triforce piece, then go to mode $12.
-    ;
     CPY #$1A
     BNE @Exit                   ; If it's not a triforce piece, then return.
     JSR EndGameMode
     LDA #$12
     STA GameMode
+
 @Exit:
     RTS
 
@@ -4609,16 +4647,17 @@ TakeClass0Complex:
 ;
 TakeHearts:
     JSR PlayKeyTakenTune
+
 TakeHeartsNoSound:
     LDA $0A                     ; Move item value in [0A] to [01].
     STA $01                     ; [01] holds the number of hearts to add minus 1.
+
 @CompareHearts:
     ; For that many hearts, add them one by one.
-    ;
     JSR CompareHeartsToContainers
     BNE @AddWholeHeart          ; If there's room to add a whole heart, go add it.
+
     ; If partial heart is not full, then fill it and return.
-    ;
     LDX HeartPartial
     INX
     BNE @FillHeartPartial
@@ -4626,7 +4665,6 @@ TakeHeartsNoSound:
 
 @AddWholeHeart:
     ; Add a whole heart.
-    ;
     INC HeartValues
     DEC $01
     BPL @CompareHearts          ; If there are more hearts to add, go compare them to heart containers again.
@@ -4666,15 +4704,14 @@ HandleClass2:
     ; X: item type
     ; Y: item slot
     ; [0A]: item value
-    ;
     LDA $0A
     CMP Items, Y
     BCC L6D1B_Exit              ; If we have a higher grade of this kind of item, return.
     STA Items, Y                ; Set the new item grade.
     CPY #$0B                    ; Ring item slot
     BNE L6D1B_Exit              ; If the item is not a ring, return.
+
     ; We took a ring. Change Link's color.
-    ;
     LDX CurSaveSlot
     LDY InvRing                 ; Get ring in inventory.
     LDA LinkColors_CommonCode, Y    ; Get the color for this ring value.
@@ -4686,6 +4723,7 @@ TakeOneRupee:
     LDA #$01                    ; Play "rupee taken" tune.
     STA Tune1Request
     INC RupeesToAdd
+
 L6D1B_Exit:
     RTS
 
@@ -4705,7 +4743,6 @@ PlayKeyTakenTune:
 AnimateWorldFading:
     ; ObjTimer[12] is the world fade timer. Every 10 frames,
     ; we step to the next half palette. There are 4 steps to fading.
-    ;
     LDA ObjTimer+12
     BNE @Exit                   ; If the timer hasn't expired, then only delay (return).
     LDA FadeCycle
@@ -4720,6 +4757,7 @@ AnimateWorldFading:
     ADC $00
     AND #$FC
     TAY
+
     ; Start writing in dynamic transfer buf from the next position
     ; available. X holds this offset.
     LDX DynTileBufLen
@@ -4730,10 +4768,11 @@ AnimateWorldFading:
     STA DynTileBuf, X
     INX                         ; %A holds 8. Write that as the length of the record.
     STA DynTileBuf, X
+
     ; Copy 8 bytes of half palette into transfer buf.
-    ;
     STA $00
     INX
+
 @CopyPalette:
     LDA LevelInfo_PaletteCycles, Y
     STA DynTileBuf, X
@@ -4751,6 +4790,7 @@ AnimateWorldFading:
     BEQ @ReturnDone
     LDA #$0A                    ; Update every 10 frames.
     STA ObjTimer+12
+
 @Exit:
     RTS
 
@@ -4771,7 +4811,6 @@ WriteBlankPrioritySprites:
     ;
     ; These sprites are first in the list. So they are used for things
     ; that must be shown above everything else, including Link.
-    ;
     LDY #$00
     LDX #$00
 :
@@ -4803,16 +4842,19 @@ CheckMazes:
     BNE @CheckMountainMaze      ; If not in forest maze, go check mountain maze.
     CMP ForestMazeDirs, X
     BNE @Mismatch               ; If direction doesn't match current step, go handle it.
+
     ; The direction matches the step.
-    ;
     CPX #$03
     BEQ @PlaySecretTune         ; If the last step matches, go let the player pass.
+
 @AdvanceMaze:
     ; Haven't passed the last step. So increment the step,
     ; but repeat this room.
     INC MazeStep
+
 @SetNextRoom:
     STY NextRoomId
+
 @Exit:
     RTS
 
@@ -4824,9 +4866,11 @@ CheckMazes:
 @Mismatch:
     CMP #$01
     BEQ @Exit                   ; If going right in the forest, allow exit.
+
 @Reset:
     JSR @ResetMazeStep          ; Else you have to start over.
     BEQ @SetNextRoom            ; Go set the next room to the current one, and return.
+
 @CheckMountainMaze:
     CPY #$1B
     BNE @ResetMazeStep          ; If not in the mountain maze either, go reset the maze step and leave room alone.
@@ -4839,9 +4883,9 @@ CheckMazes:
 @Match:
     CPX #$03
     BNE @AdvanceMaze            ; If this isn't the last step, then go advance the step, but repeat the room.
+
 @PlaySecretTune:
     ; Play secret tune, and let the player leave the maze.
-    ;
     LDA #$04
     STA Tune1Request
     RTS
@@ -4860,7 +4904,6 @@ MapScreenPosToPpuAddr:
     ;
     ; Each row of tiles is 32 tiles (and bytes) long, and 8 pixels tall.
     ; This is why the Y coordinate is multiplied by 4 (= 32 / 8).
-    ;
     LDA #$08
     STA $00
     LDA $02
@@ -4870,15 +4913,15 @@ MapScreenPosToPpuAddr:
     ROL $00
     AND #$E0
     STA $01
+
     ; Now divide X coordinate by 8, because each tile is 8 pixels wide.
-    ;
     LDA $03
     LSR
     LSR
     LSR
+
     ; Combine the low address of the row with the column to get
     ; the final low byte of PPU address.
-    ;
     ORA $01
     STA $01
     RTS
@@ -4983,6 +5026,7 @@ AnimateAndDrawObjectWalking:
 DrawObjectMirrored:
     LDY #$01                    ; Set [0C] mirrored.
     BNE :+
+
 ; Params:
 ; A: frame image
 ; X: object index
@@ -4994,9 +5038,10 @@ DrawObjectNotMirrored:
     LDY #$00
 :
     STY $0C                     ; Set [0C] not mirrored.
+
     ; Set animation index = object type + 1.
-    ;
     LDY ObjType, X
+
 ; Params:
 ; A: frame
 ; X: object index/cycle sprite index
@@ -5014,6 +5059,7 @@ DrawObjectNotMirrored:
 ;
 DrawObjectWithType:
     INY
+
 ; Params:
 ; A: frame
 ; X: object index/cycle sprite index
@@ -5031,19 +5077,20 @@ DrawObjectWithAnim:
     STA $0D                     ; [0D] holds frame.
     STY $0E                     ; [0E] holds animation index.
     STX $08                     ; [08] holds object index/cycle sprite index
+
     ; Set the left and right sprite record offsets for CurSpriteIndex.
-    ;
     LDY RollingSpriteIndex
     LDA SpriteOffsets, Y
     STA LeftSpriteOffset
     LDA SpriteOffsets+1, Y
+
     ; But if it's Link, then hardcode them to sprites $12 and $13.
-    ;
     CPX #$00
     BNE DrawObjectWithAnimAndSpecificSprites
     LDA #$48                    ; Link's left sprite record offset
     STA LeftSpriteOffset
     LDA #$4C                    ; Link's right sprite record offset
+
 DrawObjectWithAnimAndSpecificSprites:
     STA RightSpriteOffset
     LDY $0E
@@ -5060,38 +5107,38 @@ DrawObjectWithAnimAndSpecificSprites:
     CLC
     ADC #$02
     STA $03                     ; The right tile is two tiles over.
+
     ; If object is Link, or object index/slot >= $D (weapons, room item),
     ; then go set attributes and write sprites.
-    ;
     CPX #$00
     BEQ @UseTableAttr
     CPX #$0D
     BCS @UseTableAttr
+
     ; If the object has a "half-width draw" attribute, then
     ; go draw half-width.
-    ;
     LDA ObjAttr, X
     AND #$02                    ; "Half-width draw" object attribute
     BNE @DrawHalfWidth
+
     ; If the object has the "Ignore sprite attribute table" attribute,
     ; then don't look up sprite attributes.
-    ;
     LDA ObjAttr, X
     AND #$08                    ; "Ignore sprite attribute table" object attribute
     BNE :+
+
 @UseTableAttr:
     LDA ObjAnimAttrHeap, Y      ; Look up the sprite attribute.
     JSR Anim_SetSpriteDescriptorAttributes
 :
     ; If it's Link, write the sprites. He's never mirrored.
-    ;
     CPX #$00
     BEQ Anim_WriteHorizontallyFlippableSpritePair
+
     ; For other objects, the caller controls mirroring and flipping.
     ;
     ; If mirrored [0C], then draw it mirrored.
     ; Else draw it horizontally flippable, controlled by [0F].
-    ;
     LDY $0C
     BEQ Anim_WriteHorizontallyFlippableSpritePair
     JMP Anim_WriteMirroredSpritePair
@@ -5116,25 +5163,25 @@ DrawObjectWithAnimAndSpecificSprites:
 ;
 Anim_WriteHorizontallyFlippableSpritePair:
     ; If [0F] = 0, write the sprite pair with no further processing.
-    ;
     LDA $0F
     BEQ Anim_WriteSpritePair
+
     ; Otherwise, reverse the two sides.
-    ;
     LDA $02
     PHA
     LDA $03
     STA $02
     PLA
     STA $03
+
     ; Set the horizontal flip sprite attributes.
-    ;
     LDA $04
     EOR #$40
     STA $04
     LDA $05
     EOR #$40
     STA $05
+
 ; Params:
 ; [00]: Object X
 ; [01]: Object Y
@@ -5150,11 +5197,10 @@ Anim_WriteHorizontallyFlippableSpritePair:
 ;
 Anim_WriteSpritePair:
     ; If not currently invincible, then leave the attributes alone.
-    ;
     LDY ObjInvincibilityTimer, X
     BEQ Anim_WriteSpritePairNotFlashing
+
     ; For both left and right sprites, indexed by Y register:
-    ;
     LDY #$01
 :
     LDA $0004, Y                ; Toss out the palette bits of the sprite attributes.
@@ -5166,9 +5212,11 @@ Anim_WriteSpritePair:
     STA $0004, Y                ; This gives us the flashing effect.
     DEY
     BPL :-
+
 Anim_WriteSpritePairNotFlashing:
     LDX LeftSpriteOffset        ; Access the first sprite.
     LDY #$00
+
 @LoopSprite:
     LDA $0002, Y                ; Write the sprite tile.
     STA Sprites+1, X
@@ -5220,6 +5268,7 @@ Anim_WriteStaticItemSpritesWithAttributes:
     LDA #$00
     STA $0F                     ; Reset horizontal flipping.
     STA $0C                     ; Reset frame.
+
 ; Params:
 ; X: cycle sprite index / object index
 ; Y: item slot
@@ -5245,6 +5294,7 @@ Anim_WriteItemSprites:
     STA RightSpriteOffset
     PLA                         ; Restore the item slot passed in.
     TAY
+
 ; Params:
 ; X: cycle sprite index / object index
 ; Y: item slot
@@ -5275,6 +5325,7 @@ Anim_WriteSpecificItemSprites:
     CLC
     ADC #$02                    ; The second tile must be two tiles farther in CHR.
     STA $03                     ; Put it in [03].
+
     ; If left tile is $F3 or in [$20, $62),
     ; then this is a narrow / half-width object.
     LDA $02
@@ -5284,6 +5335,7 @@ Anim_WriteSpecificItemSprites:
     BCC @Wide
     CMP #$62
     BCS @Wide
+
 @Narrow:
     LDA LeftAlignHalfWidthObj
     BNE :+                      ; If not left-aligning a half-width object,
@@ -5307,6 +5359,7 @@ Anim_WriteSpecificItemSprites:
 @_Slim:
     LDA #$07
     STA $0A                     ; Both sides of slim objects overlap one pixel.
+
 ; Params:
 ; X: cycle sprite index / object index
 ; [00]: X
@@ -5333,6 +5386,7 @@ Anim_WriteMirroredSpritePair:
 ;
 Anim_SetSpriteDescriptorRedPaletteRow:
     LDA #$02
+
 ; Params:
 ; A: sprite attributes for both sides
 ;
@@ -5354,6 +5408,7 @@ Anim_SetSpriteDescriptorAttributes:
 Anim_WriteLevelPaletteSprite:
     LDY #$03
     STY $03
+
 ; Params:
 ; A: tile number
 ; X: object index
@@ -5371,6 +5426,7 @@ Anim_WriteSprite:
     LDA SpriteOffsets, Y
     TAY
     PLA
+
 ; Params:
 ; A: tile number
 ; X: object index
@@ -5382,6 +5438,7 @@ Anim_WriteSpecificSprite:
     LDA ObjX, X
     STA Sprites+3, Y
     LDA ObjY, X
+
 ; Params:
 ; A: Y coordinate
 ; Y: sprite record offset
@@ -5395,17 +5452,17 @@ Anim_EndWriteSprite:
 
 Person_DrawAndCheckCollisions_Common:
     JSR CheckMonsterCollisions
+
     ; If the person is flagged dead, then
     ; enable fireballs from the two flames, and reset the metastate.
-    ;
     LDA ObjMetastate+1
     BEQ Person_Draw
     STA PersonFireballsEnabled
     LDA #$00
     STA ObjMetastate+1
+
 Person_Draw:
     ; Either way, draw the object.
-    ;
     JSR Anim_FetchObjPosForSpriteDescriptor
     JMP DrawObjectMirrored
 
@@ -5417,18 +5474,18 @@ Person_Draw:
 ;
 CheckMonsterCollisions:
     JSR GetObjectMiddle
+
     ; If the object is invincible, skip checking collisions with Link's weapons.
     ; But go check for a collision with Link.
-    ;
     LDA ObjAttr, X
     AND #$20                    ; Invincible
     BNE @CheckLink
+
     ; If temporarily invincible, return.
-    ;
     LDA ObjInvincibilityTimer, X
     BNE @Exit
+
     ; Check for collisions with each weapon.
-    ;
     LDY #$0F
     JSR CheckMonsterBoomerangOrFoodCollision
     LDY #$0E
@@ -5441,18 +5498,19 @@ CheckMonsterCollisions:
     JSR CheckMonsterSwordCollision
     LDY #$12
     JSR CheckMonsterArrowOrRodCollision
+
 @CheckLink:
     JSR CheckLinkCollision
+
     ; If the monster is not dying, then go see about monsters
     ; that capture Link.
-    ;
     LDA ObjType, X
     LDY ObjMetastate, X
     BEQ @CheckCaptors
+
     ; This monster is dying.
     ;
     ; If it's a goriya that threw a boomerang, then destroy the boomerang.
-    ;
     CMP #$05
     BEQ :+
     CMP #$06                    ; Red Goriya
@@ -5463,13 +5521,13 @@ CheckMonsterCollisions:
     LDY ObjRefId, X             ; Get the object slot of this goriya's boomerang.
     LDA #$00
     STA ObjType, Y
+
 @Exit:
     RTS
 
 @CheckCaptors:
     ; If the monster is a wallmaster or like-like and there's a hit
     ; (using [0C] flag), then set the monster's capture flag.
-    ;
     CMP #$27                    ; Wallmaster object type
     BEQ :+
     CMP #$17                    ; LikeLike object type
@@ -5478,6 +5536,7 @@ CheckMonsterCollisions:
     LDA $0C
     BEQ @Exit2
     INC ObjCaptureTimer, X
+
 @Exit2:
     RTS
 
@@ -5490,29 +5549,28 @@ CheckMonsterCollisions:
 ;
 GetObjectMiddle:
     ; Start with offset 8 for X and Y in [02] and [03].
-    ;
     LDA #$08
     STA $02
     STA $03
+
     ; If object attribute $40 is set, make X offset 4.
-    ;
     LDA ObjAttr, X
     AND #$40                    ; Half width (for collision detection)
     BEQ :+
     LSR $02                     ; Cut the X offset [02] in half.
 :
     ; Add object's X coordinate to [02].
-    ;
     LDA ObjX, X
     CLC
     ADC $02
     STA $02
+
     ; Add object's Y coordinate to [03].
-    ;
     LDA ObjY, X
     CLC
     ADC $03
     STA $03
+
 ObjTypeToDamagePoints:
     .BYTE $60, $02, $01, $80, $80, $01, $80, $80
     .BYTE $80, $80, $80, $01, $02, $80, $80, $01
@@ -5539,8 +5597,8 @@ ObjTypeToDamagePoints:
 ;
 CheckLinkCollision:
     JSR GetObjectMiddle
+
     ; Reset variables to return.
-    ;
     LDA #$00
     STA ShotCollidesWithLink
     STA $06
@@ -5548,26 +5606,26 @@ CheckLinkCollision:
     STA $0C
     LDY #$00
     STY $00
+
     ; If Link is invincible, or we have the magic clock,
     ; or Link is stunned, or the monster is stunned;
     ; then return no collision.
-    ;
     LDA ObjInvincibilityTimer
     ORA InvClock
     ORA ObjStunTimer
     ORA ObjStunTimer, X
     BNE L73A9_Exit
+
 CheckLinkCollisionPreinit:
     ; If Link is halted or paralyzed, then return no collision.
-    ;
     LDA ObjState
     CMP #$40
     BEQ L73A9_Exit
     LDA LinkParalyzed
     BNE L73A9_Exit
+
     ; If the object is a monster's shot/projectile, and it's not in a
     ; state that it can do damage; then return no collision.
-    ;
     LDA ObjType, X
     CMP #$53
     BCC :+
@@ -5577,7 +5635,6 @@ CheckLinkCollisionPreinit:
     BNE L73A9_Exit
 :
     ; Store Link's midpoint coordinates in [04] and [05].
-    ;
     LDA ObjX
     CLC
     ADC #$08
@@ -5586,25 +5643,25 @@ CheckLinkCollisionPreinit:
     CLC
     ADC #$08
     STA $05
+
     ; If both objects are 9 pixels apart or more, then return no collision.
-    ;
     LDA #$09
     JSR DoObjectsCollide
     BEQ L73A9_Exit
+
     ; They collide. Now find out how they collide.
     ;
     ; If it's a regular monster, go harm Link.
-    ;
     LDA ObjType, X
     CMP #$53
     BCC HarmLink
+
     ; Here, the attacker is a monster's shot/projectile.
     ; Flag this kind of collision.
-    ;
     INC ShotCollidesWithLink
+
     ; If object type = Fireball2 ($56) or $5A, or Link is not idle;
     ; then go harm Link.
-    ;
     CMP #$56
     BEQ HarmLink
     CMP #$5A
@@ -5612,12 +5669,12 @@ CheckLinkCollisionPreinit:
     LDA ObjState
     AND #$F0
     BNE HarmLink
+
     ; If Link and the shot are not facing opposite directions,
     ; then go harm Link.
     ;
     ; Note the bitwise AND in the test. It picks out one direction
     ; component of a monster that can move diagonally.
-    ;
     LDA ObjDir
     ORA ObjDir, X
     AND #$0C
@@ -5628,6 +5685,7 @@ CheckLinkCollisionPreinit:
     AND #$03
     CMP #$03
     BNE HarmLink
+
 @FacingOpposite:
     ; Link and the shot are facing opposite directions.
     ; Link can parry certain weapons/shots.
@@ -5635,38 +5693,38 @@ CheckLinkCollisionPreinit:
     ; For flying rock, $54, arrow, and boomerang, this means
     ; no harmful collision; but it still counts as a shot collision.
     ; So, go treat this as a parry.
-    ;
     LDA ObjType, X
     CMP #$55
     BCC @Parry
     CMP #$5B
     BCS @Parry
+
     ; If the magic shield is missing, then the rest of the shots do damage.
     ; So, go harm Link.
-    ;
     LDA InvMagicShield
     BEQ HarmLink
+
 @Parry:
     ; Else Link parries.
     ;
     ; Play the "parry" tune, and cancel the collision (reset [06]).
-    ;
     LDA #$01
     STA Tune0Request
     LDA #$00
     STA $06
+
 L73A9_Exit:
     RTS
 
 HarmLink:
     JSR BeginShove
+
     ; Flag collision with [0C], even though [06] was already set.
-    ;
     INC $0C
+
     ; Unpack the damage points for the monster's type.
     ; The low nibble is the high byte.
     ; (Damage points byte AND $F0) is the low byte.
-    ;
     LDY ObjType, X
     LDA ObjTypeToDamagePoints, Y
     PHA
@@ -5675,6 +5733,7 @@ HarmLink:
     PLA
     AND #$F0
     STA $0E
+
 ; Params:
 ; X: object index of the attacker
 ; [0D]: damage points high byte
@@ -5682,7 +5741,6 @@ HarmLink:
 ;
 Link_BeHarmed:
     ; If object type is not whirlwind, then make the "hurt" sound effect.
-    ;
     LDY ObjType, X
     CPY #$2E
     BEQ :+
@@ -5690,7 +5748,6 @@ Link_BeHarmed:
     JSR PlaySample
 :
     ; For every level of ring (1 or 2), divide the 16-bit damage amount in [0E:0D] by 2.
-    ;
     LDY InvRing
     BEQ @ResetHelp
 :
@@ -5698,27 +5755,27 @@ Link_BeHarmed:
     ROR $0E
     DEY
     BNE :-
+
 @ResetHelp:
     ; Reset values used in special item drops.
-    ;
     LDA #$00
     STA WorldKillCount
     STA HelpDropCount
     STA HelpDropValue
+
     ; If heart partial >= low damage points byte, then simply
     ; subtract the damage byte from heart partial.
     ; Else go borrow from full hearts.
-    ;
     LDA HeartPartial
     CMP $0E
     BCC @BorrowHeart
     SEC
     SBC $0E
     STA HeartPartial
+
     ; If full hearts >= high damage points byte, then simply
     ; subtract the damage byte from full hearts.
     ; Else go handle Link dying.
-    ;
     LDA HeartValues
     AND #$0F
     CMP $0D
@@ -5735,7 +5792,6 @@ Link_BeHarmed:
     ; The straightforward way to subtract $80 would yield $3F0.
     ; But the method here yields $3EF, because partial heart is
     ; considered full when = $FF instead of $100.
-    ;
     LDA $0E
     SEC
     SBC HeartPartial
@@ -5747,13 +5803,13 @@ Link_BeHarmed:
     LDA #$FF
     STA HeartPartial
     BNE @ResetHelp
+
 @HandleDied:
     ; Link died.
     ;
     ; Set full hearts, partial heart, and Link's object state to 0.
     ; Make Link face down.
     ; Go to mode $11.
-    ;
     LDA HeartValues
     AND #$F0
     STA HeartValues
@@ -5778,31 +5834,31 @@ Link_BeHarmed:
 ;
 CheckMonsterBoomerangOrFoodCollision:
     ; If the weapon slot holds food (high bit of state is set), then return.
-    ;
     LDA a:ObjState, Y
     ASL
     BCS :-
     STY $00                     ; [00] holds the weapon slot
+
     ; Set boomerang damage type (2) in [09].
-    ;
     LDA #$02
     STA $09
+
     ; Set collision threshold $A in both axes.
-    ;
     LDA #$0A
     STA $0D
     STA $0E
+
     ; The boomerang's middle X is 4 pixels to the right. Store in [04].
-    ;
     LDA a:ObjX, Y
     CLC
     ADC #$04
     STA $04
+
     ; The boomerang's middle Y is 8 pixels down. Store in [05].
-    ;
     LDA a:ObjY, Y
     CLC
     ADC #$08
+
 ; Params:
 ; A: weapon object mid Y
 ; X: monster object slot
@@ -5821,57 +5877,56 @@ CheckMonsterBoomerangOrFoodCollision:
 ;
 CheckMonsterWeaponCollision:
     STA $05
+
     ; Reset [06] for no collision.
-    ;
     LDA #$00
     STA $06
+
     ; If the weapon's not active (state = 0), then return.
-    ;
     LDY $00
     LDA a:ObjState, Y
     BEQ L74D8_Exit
+
     ; If the objects do not collide, then return.
-    ;
     JSR DoObjectsCollideWithThresholds
     BEQ L74D8_Exit
+
     ; If the weapon is a boomerang ...
-    ;
     CPY #$0F
     BNE HandleMonsterWeaponCollision
+
     ; ... and the monster is invincible to it,
     ; then play the parry sound.
-    ;
     LDA ObjInvincibilityMask, X
     AND $09
     BEQ :+
     JSR PlayParryTune
 :
     ; Set the boomerang state to return fast to the thrower.
-    ;
     LDA #$50
     STA a:ObjState, Y
+
     ; If the monster is invincible to the boomerang, then return.
-    ;
     LDA ObjInvincibilityMask, X
     AND $09
     BNE L74D8_Exit
+
     ; Still the boomerang.
     ; Reset [07] damage points, and set the monster's stun timer to $10 ($A0 frames).
-    ;
     LDA #$00
     STA $07
     LDA #$10
     STA ObjStunTimer, X
+
 HandleMonsterWeaponCollision:
     ; If the monster is invincible to this damage type, then
     ; go play parry sound if needed, and return.
-    ;
     LDA ObjInvincibilityMask, X
     AND $09
     BNE L_PlayParrySoundForDamageType
+
     ; If the monster is Blue Gohma or Red Gohma, then
     ; let it handle the collision.
-    ;
     LDA ObjType, X
     CMP #$33
     BEQ :+
@@ -5885,7 +5940,6 @@ HandleMonsterWeaponCollision:
     ;   If not hit by the boomerang, then
     ;     Set monster's direction to the weapon's
     ;   Go deal damage
-    ;
     CMP #$13
     BEQ :+
     CMP #$12
@@ -5900,7 +5954,6 @@ HandleMonsterWeaponCollision:
 @CheckDarknut:
     ; If the monster is a red or blue darknut, and it and the weapon
     ; are facing opposite directions, then only play the parry sound.
-    ;
     CMP #$0B
     BEQ :+
     CMP #$0C
@@ -5912,14 +5965,14 @@ HandleMonsterWeaponCollision:
     BEQ L_PlayParrySoundForDamageType
     CMP #$03
     BEQ L_PlayParrySoundForDamageType
+
 DealDamage:
     ; Play the "harmed" sound.
-    ;
     LDA #$02
     STA Tune0Request
+
     ; Subtract the damage points from HP; if damage points >= HP,
     ; then go handle the monster dying.
-    ;
     LDA ObjHP, X
     CMP $07                     ; [07] damage points
     BCC HandleMonsterDied
@@ -5927,12 +5980,12 @@ DealDamage:
     SBC $07                     ; [07] damage points
     STA ObjHP, X
     BEQ HandleMonsterDied
+
 L74D8_Exit:
     RTS
 
 L_PlayParrySoundForDamageType:
     ; Play the parry sound for all but fire and bomb damage types.
-    ;
     LDA $09
     CMP #$20                    ; Fire damage type
     BEQ L74D8_Exit
@@ -5942,17 +5995,16 @@ L_PlayParrySoundForDamageType:
 
 HandleMonsterDied:
     ; Handle the monster dying.
-    ;
     INC WorldKillCount
+
     ; Increase the help drop counter, if not at max ($A).
-    ;
     LDA HelpDropCount
     CMP #$0A
     BCS @SetDyingMetastate
     INC HelpDropCount
+
     ; If the help drop counter has reached the max, and damage type = bomb (8);
     ; then set [51] HelpDropValue in order to drop a bomb next time.
-    ;
     LDA HelpDropCount
     CMP #$0A
     BNE @SetDyingMetastate
@@ -5960,12 +6012,13 @@ HandleMonsterDied:
     CMP #$08
     BNE @SetDyingMetastate
     INC HelpDropValue
+
 @SetDyingMetastate:
     ; Set the dying metastate, and reset some object info.
-    ;
     JSR UpdateDeadDummy
     LDA #$00
     STA ObjStunTimer, X
+
 ; Params:
 ; A: 0
 ;
@@ -5985,36 +6038,36 @@ ResetShoveInfoAndInvincibilityTimer:
 ;
 CheckMonsterSwordShotOrMagicShotCollision:
     STY $00                     ; [00] holds the weapon slot
+
     ; Set magic shot damage type ($10) in [09].
-    ;
     LDA #$10
     STA $09
+
     ; If the shot is a sword shot that's spreading out, then return.
-    ;
     LDA a:ObjState, Y
     LSR
     BCS @Exit
+
     ; Set horizontal collision threshold $C.
-    ;
     LDA #$0C
     STA $0D
+
     ; If the weapon is a magic shot, go use $20 damage points.
-    ;
     LDA a:ObjState, Y
     LDY #$20
     ASL
     BCS @CheckCollision
+
     ; The weapon is a sword shot.
     ;
     ; First, change the damage type to sword (1).
-    ;
     LDA #$01
     STA $09
+
     ; Determine the damage points for the kind of sword.
     ; - wood sword:   $10
     ; - white sword:  $20
     ; - master sword: $40
-    ;
     LDY #$40
     LDA Items
     CMP #$03
@@ -6023,21 +6076,23 @@ CheckMonsterSwordShotOrMagicShotCollision:
     CMP #$02
     BEQ @CheckCollision
     LDY #$10
+
 @CheckCollision:
     TYA
     JSR CheckMonsterShotCollision
+
     ; If no collision, then return.
-    ;
     LDA $06
     BEQ @Exit
+
     ; Else handle blocking the shot.
-    ;
     TXA
     PHA
     LDX #$0E                    ; Shot object slot
     JSR HandleShotBlocked
     PLA
     TAX
+
 @Exit:
     RTS
 
@@ -6052,34 +6107,34 @@ CheckMonsterSwordShotOrMagicShotCollision:
 ;
 CheckMonsterBombOrFireCollision:
     STY $00                     ; [00] holds the weapon slot
+
     ; Set up parameters for a fire.
-    ;
     LDA #$20
     STA $09                     ; [09] holds fire damage type
     LDA #$10
     STA $07                     ; [07] holds $10 damage points
     LDA #$0E
     STA $0D                     ; [0D] holds collision threshold $E
+
     ; If the weapon is a fire, then go set the hotspot/midpoint.
     ; But if the bomb is not detonating, then return.
-    ;
     LDA a:ObjState, Y
     CMP #$20
     BCS @SetHotspot
     CMP #$13
     BNE L7595_Exit
+
     ; Else set up parameters for a bomb.
-    ;
     LDA #$08
     STA $09                     ; [09] holds bomb damage type
     LDA #$40
     STA $07                     ; [07] holds $40 damage points
     LDA #$18
     STA $0D                     ; [0D] holds collision threshold $18
+
 @SetHotspot:
     ; The weapon's midpoint/hotspot is at (X + 8, Y + 8).
     ; Pass it in [04] and [05].
-    ;
     LDA a:ObjX, Y
     CLC
     ADC #$08
@@ -6089,17 +6144,18 @@ CheckMonsterBombOrFireCollision:
     ADC #$08
     STA $05
     LDA $0D                     ; Pass collision threshold in A.
+
     ; If the objects do not collide, then return.
-    ;
     JSR DoObjectsCollide
     BEQ L7595_Exit
     JSR HandleMonsterWeaponCollision
+
     ; If the monster is weak to the damage type, then shove it.
-    ;
     LDA ObjInvincibilityMask, X
     AND $09
     BNE L7595_Exit
     JSR BeginShove
+
 L7595_Exit:
     RTS
 
@@ -6118,19 +6174,20 @@ SwordDamagePoints:
 ;
 CheckMonsterSwordCollision:
     STY $00                     ; [00] holds the weapon slot
+
     ;Set sword damage type (1) in [09].
-    ;
     LDA #$01
     STA $09
+
     ; If the sword is not fully extended, then return.
-    ;
     LDA a:ObjState, Y
     CMP #$02
     BNE L7595_Exit
+
     ; Look up and set the damage points for the sword type.
-    ;
     LDY Items
     LDA SwordDamagePoints-1, Y
+
 ; Params:
 ; A: damage points
 ; X: monster slot
@@ -6144,10 +6201,10 @@ CheckMonsterSwordCollision:
 ;
 CheckMonsterStabbingCollision:
     STA $07                     ; [07] damage points
+
     ; If Link's direction is vertical, then set collision thresholds accordingly:
     ; [0D] := $C
     ; [0E] := $10
-    ;
     LDA ObjDir
     AND #$0C
     BEQ @Horizontal
@@ -6160,15 +6217,14 @@ CheckMonsterStabbingCollision:
     ; Else switch it:
     ; [0D] := $10
     ; [0E] := $C
-    ;
     LDA #$10
     STA $0D
     LDA #$0C
 :
     STA $0E
     JSR CheckMonsterSlenderWeaponCollision2
+
     ; If no collision, then return.
-    ;
     LDA $06
     BEQ L7595_Exit
     JMP ParryOrShove
@@ -6186,9 +6242,9 @@ CheckMonsterStabbingCollision:
 CheckMonsterArrowOrRodCollision:
     STY $00                     ; [00] holds the weapon slot
     LDA a:ObjState, Y
+
     ; If the weapon is a rod, then
     ; go check a stabbing collision using rod parameters.
-    ;
     CMP #$30
     BCC :+
     LDA #$01
@@ -6197,15 +6253,14 @@ CheckMonsterArrowOrRodCollision:
     BNE CheckMonsterStabbingCollision
 :
     ; We have an arrow. If it's no longer flying, then return.
-    ;
     CMP #$20
     BCS L763A_Exit
+
     ; Set up arrow parameters.
-    ;
     LDA #$04
     STA $09                     ; [09] holds arrow damage type
+
     ; Use $20 damage points for wooden arrows, and $40 for silver ones.
-    ;
     LDA #$20
     LDY InvArrow
     CPY #$01
@@ -6214,6 +6269,7 @@ CheckMonsterArrowOrRodCollision:
 :
     LDY #$0B
     STY $0D                     ; [0D] holds collision threshold $B
+
 ; Params:
 ; A: damage points
 ; X: monster object slot
@@ -6228,17 +6284,17 @@ CheckMonsterArrowOrRodCollision:
 ;
 CheckMonsterShotCollision:
     JSR CheckMonsterSlenderWeaponCollision
+
     ; If no collision, return.
-    ;
     LDA $06
     BEQ L763A_Exit
+
     ; $12 is the arrow and rod slot. But this routine will only
     ; be called if it's an arrow.
     ;
     ; If the weapon is an arrow and the monster is Pol's Voice;
     ; then set HP to 0, and deal damage, even if the collision
     ; checking routine above dealt some. This way it dies for sure.
-    ;
     CPY #$12
     BNE ParryOrShove
     LDA ObjType, X
@@ -6247,20 +6303,18 @@ CheckMonsterShotCollision:
     LDA #$00
     STA ObjHP, X
     JMP DealDamage
-
 :
     ; If the weapon is an arrow, set its state to spark ($20).
-    ;
     LDA #$20
     STA a:ObjState, Y
     LDA #$03
     STA ObjAnimCounter, Y
+
 ParryOrShove:
     ; For any weapon type:
     ;
     ; If the monster is a darknut and both are facing opposite directions,
     ; then go parry.
-    ;
     LDA ObjType, X
     CMP #$0B                    ; Red Darknut
     BEQ :+
@@ -6275,12 +6329,12 @@ ParryOrShove:
     BEQ PlayParryTune
 :
     ; Else shove the monster.
-    ;
     JMP BeginShove
 
 PlayParryTune:
     LDA #$01
     STA Tune0Request
+
 L763A_Exit:
     RTS
 
@@ -6302,6 +6356,7 @@ CheckMonsterSlenderWeaponCollision:
     STA $07
     LDA $0D
     STA $0E
+
 ; Params:
 ; X: monster object slot
 ; [00]: weapon object slot
@@ -6317,12 +6372,12 @@ CheckMonsterSlenderWeaponCollision:
 ;
 CheckMonsterSlenderWeaponCollision2:
     LDY $00
+
     ; If Link is facing vertically, then:
     ; [04] := (weapon X + 6)
     ; A    := (weapon Y + 8)
     ;
     ; Shouldn't it be based on the weapon's direction?
-    ;
     LDA ObjDir
     AND #$0C
     BEQ @CheckHorizontal
@@ -6341,7 +6396,6 @@ CheckMonsterSlenderWeaponCollision2:
     ; A    := (weapon Y + 6)
     ;
     ; Shouldn't it be based on the weapon's direction?
-    ;
     LDA a:ObjX, Y
     CLC
     ADC #$08
@@ -6351,7 +6405,6 @@ CheckMonsterSlenderWeaponCollision2:
     ADC #$06
 :
     ; The A register will be copied to [05] and used here.
-    ;
     JMP CheckMonsterWeaponCollision
 
 ; Params:
@@ -6373,9 +6426,9 @@ CheckMonsterSlenderWeaponCollision2:
 DoObjectsCollide:
     ; Use the same threshold value horizontally and vertically.
     ; Copy it to [0D] for horizontal threshold, and [0E] for vertical one.
-    ;
     STA $0D
     STA $0E
+
 ; Params:
 ; [00]: weapon or Link object slot (unused)
 ; [02]: object 1 mid X
@@ -6395,36 +6448,36 @@ DoObjectsCollide:
 ;
 DoObjectsCollideWithThresholds:
     ; Reset [06] to indicate no collision by default.
-    ;
     LDA #$00
     STA $06
     LDY $00
+
     ; Store in [0A] the horizontal distance between the two objects.
-    ;
     LDA $02
     SEC
     SBC $04
     JSR Abs
     STA $0A
+
     ; If distance >= horizontal threshold in [0D], return 0.
-    ;
     CMP $0D
     BCS @ReturnValue
+
     ; Store in [0B] the vertical distance between the two objects.
-    ;
     LDA $03
     SEC
     SBC $05
     JSR Abs
     STA $0B
+
     ; If distance >= vertical threshold in [0E], return 0.
-    ;
     CMP $0E
     BCS @ReturnValue
+
     ; If we get here, then the objects are close enough in both axes.
     ; Return 1.
-    ;
     INC $06
+
 @ReturnValue:
     LDA $06
     RTS
@@ -6453,7 +6506,6 @@ BeginShove:
     ; then return without shoving.
     ;
     ; If a monster attacks Link, then damage type will be 0.
-    ;
     LDY $00
     CPX #$0D
     BCS :+
@@ -6473,17 +6525,16 @@ BeginShove:
     ;
     ; Start with an assumption that the direction is vertical:
     ; Store 8 (up) in [08], monster Y in [04], and other Y in [05].
-    ;
     LDA #$08
     STA $08
     LDA ObjY, X
     STA $04
     LDA a:ObjY, Y
     STA $05
+
     ; If the defender is Link and his grid offset <> 0 then
     ; use his usual object direction variable to determine
     ; which axis to check.
-    ;
     CPY #$00
     BNE :+
     LDA ObjGridOffset
@@ -6502,20 +6553,20 @@ BeginShove:
     ; UNKNOWN:
     ; [0B] isn't always set, ifLink's grid offset = 0.
     ; For example, if fire attacks him.
-    ;
     LDA $0B
     CMP #$04
     BCS @CheckVertical
+
 @CheckHorizontal:
     ; If the direction checked is left or right,
     ; set [08] to 2 (left), monster X in [04] and other X in [05].
-    ;
     LDA #$02
     STA $08
     LDA ObjX, X
     STA $04
     LDA a:ObjX, Y
     STA $05
+
 @CheckVertical:
     ; If the monster is down or right of the other object,
     ; then use the opposite direction already in [08].
@@ -6524,59 +6575,58 @@ BeginShove:
     ;
     ; Again assuming Link is the defender; after this, [08] points
     ; Link away from the monster.
-    ;
     LDA $04
     CMP $05
     BCS :+
     LSR $08
 :
     ; If a monster is the defender, go handle it separately.
-    ;
     CPY #$00
     BNE @MonsterDefender
+
     ; Link is the defender.
     ;
     ; If Link is invincible, return without shoving.
-    ;
     LDA ObjInvincibilityTimer
     BNE @Exit
+
     ; Store the shove direction we determined.
     ;
     ; Turn on the high bit to indicate that the next time we try to
     ; move by shoving, it will be the first time for this shove action.
-    ;
     LDA $08
     ORA #$80
     STA ObjShoveDir
+
     ; Mark Link invincible $18 frames, and should move $20 pixels.
-    ;
     LDA #$18
     STA ObjInvincibilityTimer
     LDA #$20
     STA ObjShoveDistance
+
     ; If Link was shoved by one of his own weapons, then
     ; nothing else to do. Return.
-    ;
     CPX #$0D
     BCS @Exit
+
     ; Link was shoved by a monster.
     ;
     ; If the monster's object attribute "reverse after hit Link" is set,
     ; then return.
-    ;
     LDA ObjAttr, X
     AND #$80
     BNE @Exit
+
     ; If the attacker is a vire, then return.
-    ;
     LDA ObjType, X
     CMP #$12
     BEQ @Exit
+
     ; Turn the attacker in the opposite direction.
-    ;
     LDA ObjDir, X
     JSR GetOppositeDir
     STA ObjDir, X
+
 @Exit:
     RTS
 
@@ -6585,15 +6635,14 @@ BeginShove:
     ;
     ; Set the shove direction to the weapon's direction,
     ; instead of the direction passed in [0B].
-    ;
     LDA a:ObjDir, Y
     STA $08
+
     ; If the monster's attribute "reverse after hit Link" is set, then
     ; combine the shove direction with $40.
     ;
     ; UNKNOWN:
     ; But the shoving routing doesn't read this flag.
-    ;
     LDA ObjAttr, X
     AND #$80
     BEQ :+
@@ -6602,20 +6651,19 @@ BeginShove:
     STA $08
 :
     ; If the monster is invincible, then return without shoving.
-    ;
     LDA ObjInvincibilityTimer, X
     BNE @Exit2
+
     ; If the monster is not a Gohma, then go store the shove direction.
-    ;
     LDA ObjType, X
     CMP #$33
     BEQ @Gohma
     CMP #$34
     BNE @SetShoveDir
+
 @Gohma:
     ; This a Gohma, but if the current part [0F] is not an eye part (3 or 4),
     ; then return, so that the hit doesn't register.
-    ;
     LDA $0F
     CMP #$03
     BEQ :+
@@ -6623,25 +6671,25 @@ BeginShove:
     BNE @Exit2
 :
     ; If Gohma's eye state/frame image <> 3, then return.
-    ;
     LDA $046B, X
     CMP #$03
     BNE @Exit2
+
 @SetShoveDir:
     ; Store the shove direction for the monster.
     ;
     ; Turn on the high bit to indicate that the next time we try to
     ; move by shoving, it will be the first time for this shove action.
-    ;
     LDA $08
     ORA #$80
     STA ObjShoveDir, X
+
     ; Mark the monster invincible $10 frames, and should move $40 pixels.
-    ;
     LDA #$40
     STA ObjShoveDistance, X
     LDA #$10
     STA ObjInvincibilityTimer, X
+
 @Exit2:
     RTS
 
@@ -6651,8 +6699,8 @@ Filler_7751:
     .BYTE $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
     .BYTE $FF, $FF, $FF, $FF, $FF, $FF, $FF
 
-
 .SEGMENT "BANK_01_ISR"
+
 
 
 
@@ -6682,11 +6730,10 @@ SwitchBank_Local1:
     STA $E000
     RTS
 
-
 .SEGMENT "BANK_01_VEC"
+
 
 
 
 ; Unknown block
     .BYTE $84, $E4, $50, $BF, $F0, $BF
-

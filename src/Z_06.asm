@@ -11,6 +11,7 @@
 .EXPORT InitMode2_Submodes
 .EXPORT UpdateMode2Load_Full
 
+
 LevelBlockAddrsQ1:
     .ADDR LevelBlockOW
     .ADDR LevelBlockUW1Q1
@@ -53,21 +54,21 @@ LevelBlockAddrsQ2:
 InitMode2_Submodes:
     LDA GameSubmode
     JSR TableJump
+
 InitMode2_Submodes_JumpTable:
     .ADDR InitMode2_Sub0
     .ADDR InitMode2_Sub1
 
 InitMode2_Sub0:
     ; Copy level block for level.
-    ;
     LDA CurLevel
     ASL
     TAX
     LDY CurSaveSlot
     LDA QuestNumbers, Y
     BNE @SecondQuest
+
     ; First quest.
-    ;
     LDA LevelBlockAddrsQ1, X
     STA $00
     INX
@@ -76,11 +77,11 @@ InitMode2_Sub0:
 
 @SecondQuest:
     ; Second quest.
-    ;
     LDA LevelBlockAddrsQ2, X
     STA $00
     INX
     LDA LevelBlockAddrsQ2, X
+
 @Copy:
     STA $01
     JSR FetchLevelBlockDestInfo
@@ -89,7 +90,6 @@ InitMode2_Sub0:
 
 InitMode2_Sub1:
     ; Copy level info.
-    ;
     LDA CurLevel
     ASL
     TAX
@@ -170,6 +170,7 @@ FetchDestAddrForCommonDataBlock:
 ;
 CopyBlock:
     LDY #$00
+
 @Loop:
     LDA ($00), Y
     STA ($02), Y
@@ -201,7 +202,6 @@ CopyBlock:
 
 UpdateMode2Load_Full:
     ; Make replacements for the second quest.
-    ;
     LDY CurSaveSlot
     LDA QuestNumbers, Y
     BEQ @Exit                   ; If not second quest, then return.
@@ -210,20 +210,21 @@ UpdateMode2Load_Full:
     TAX
     ASL
     TAY
+
     ; Get an address for the current level that points
     ; to an array of replacement bytes for Q2 UW level info.
     ;
     ; This address array doesn't access the OW element (0).
     ; So, it overlaps the last two bytes of LevelInfoUWQ2Replacements9.
-    ;
     LDA LevelInfoUWQ2ReplacementAddrs-2, Y
     STA $00
     LDA LevelInfoUWQ2ReplacementAddrs-1, Y
     STA $01
+
     ; Get the number of replacement bytes for Q2 UW level info.
     ; This address array doesn't access the OW element (0).
-    ;
     LDY LevelInfoUWQ2ReplacementSizes-1, X
+
 @ReplaceInfoBytes:
     ; Copy bytes from Q2 replacement array to level info
     ; starting at offset $29 (shortcut position array).
@@ -231,13 +232,14 @@ UpdateMode2Load_Full:
     STA LevelInfo_ShortcutOrItemPosArray, Y
     DEY
     BPL @ReplaceInfoBytes
+
 @Exit:
     RTS
 
 @PatchQ2Rooms:
     ; Replace attributes of several rooms in OW in second quest.
-    ;
     LDY #$07
+
 @ReplaceRoomBytes:
     LDX LevelBlockAttrsBQ2ReplacementOffsets, Y
     LDA LevelBlockAttrsBQ2ReplacementValues, Y
@@ -429,7 +431,6 @@ LevelInfoUW8:
 
 LevelInfoUW9:
     .INCBIN "dat/LevelInfoUW9.dat"
-
 CommonDataBlock_Bank6:
 
 .SEGMENT "BANK_06_DATA"
@@ -440,6 +441,7 @@ CommonDataBlock_Bank6:
 .EXPORT LevelPaletteRow7TransferBuf
 .EXPORT MenuPalettesTransferBuf
 .EXPORT TriforceRow0TransferBuf
+
 
 MenuPalettesTransferBuf:
     .BYTE $3F, $00, $20, $0F, $30, $00, $12, $0F
@@ -480,11 +482,11 @@ TriforceTextTransferBuf:
     .BYTE $2B, $AC, $08, $1D, $1B, $12, $0F, $18
     .BYTE $1B, $0C, $0E
 
-
 .SEGMENT "BANK_06_DLIST"
 
 
 .EXPORT TransferCurTileBuf
+
 
 TransferBufAddrs:
     .ADDR DynTileBuf
@@ -559,10 +561,10 @@ TransferCurTileBuf:
     LDA TransferBufAddrs+1, X
     STA $01
     JSR TransferTileBuf
+
     ; UNKNOWN:
     ; $3D is the maximum size of the dynamic transfer buf. Is this
     ; $3F related? [0300] is only ever written.
-    ;
     LDA #$3F
     STA $0300
     LDX #$00
@@ -601,6 +603,7 @@ ContinueTransferTileBuf:
     INY                         ; increment Y index to point to first byte of text.
 :
     PLP
+
     ; If the count was 0 (bottom 6 bits),
     ; then make it 64.
     CLC
@@ -609,9 +612,11 @@ ContinueTransferTileBuf:
 :
     ROR
     LSR
+
     ; We pulled the flags out, and we're left with a count in A.
     ; Move it to X.
     TAX
+
 @Loop:
     BCS :+                      ; If the original bit 6 is clear,
     INY                         ; then increment Y index (not repeating).
@@ -621,17 +626,17 @@ ContinueTransferTileBuf:
     DEX
     BNE @Loop
     PLA                         ; Restore VRAM address high byte.
+
     ; If we wrote to $3Fxx, then set PPUADDR to $3F00, then $0000.
-    ;
     CMP #$3F
     BNE @AdvanceSource
     STA PpuAddr_2006
     STX PpuAddr_2006
     STX PpuAddr_2006
     STX PpuAddr_2006
+
 @AdvanceSource:
     ; Advance the source address to one after the last byte read.
-    ;
     SEC
     TYA
     ADC $00
@@ -639,6 +644,7 @@ ContinueTransferTileBuf:
     LDA #$00
     ADC $01
     STA $01
+
 TransferTileBuf:
     LDX PpuStatus_2002
     LDY #$00
@@ -838,8 +844,8 @@ StoryTileAttrTransferBuf:
 GameTitleTransferBuf:
     .INCBIN "dat/GameTitleTransferBuf.dat"
 
-
 .SEGMENT "BANK_06_ISR"
+
 
 
 
@@ -859,11 +865,10 @@ GameTitleTransferBuf:
     .BYTE $8D, $00, $E0, $4A, $8D, $00, $E0, $4A
     .BYTE $8D, $00, $E0, $4A, $8D, $00, $E0, $60
 
-
 .SEGMENT "BANK_06_VEC"
+
 
 
 
 ; Unknown block
     .BYTE $84, $E4, $50, $BF, $F0, $BF
-

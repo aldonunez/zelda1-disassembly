@@ -5,6 +5,7 @@
 
 .EXPORT DriveAudio
 
+
 SongTable:
     .BYTE $7D, $B5, $6E, $67, $7D, $AD, $64, $64
     .BYTE $75, $7D, $85, $95, $7D, $8D, $95, $9D
@@ -107,7 +108,6 @@ DriveAudio:
     ; by first disabling them, then enabling them.
     ;
     ; Then go drive tune channel 0 only.
-    ;
     LDA Paused
     BEQ @Play
     LDA #$00
@@ -115,23 +115,24 @@ DriveAudio:
     LDA #$0F
     STA ApuStatus_4015
     BNE @Paused
+
 @Play:
     ; Else the game is not paused.
     ;
     ; Synchronize the APU frame counter once a video frame.
-    ;
     LDA #$FF
     STA Ctrl2_FrameCtr_4017
+
     ; Drive each game sound channel.
-    ;
     JSR DriveTune1
     JSR DriveEffect
     JSR DriveSample
     JSR DriveSong
+
 @Paused:
     JSR DriveTune0
+
     ; Reset all requests for sound.
-    ;
     LDA #$00
     STA Tune0Request
     STA EffectRequest
@@ -161,18 +162,19 @@ L18C9_SilenceSong:
 
 DriveTune0:
     LDA Tune0Request
+
     ; Tune $80 is only a signal to silence the song.
-    ;
     BMI L18C9_SilenceSong
     BEQ @CheckCurrentTune
+
     ; If the requested tune is not "heart warning", then go play it.
-    ;
     CMP #$40
     BNE @ChangeTune
+
     ; Else only play "heart warning" if nothing else is playing.
-    ;
     LDX Tune0
     BEQ @ChangeTune
+
 @CheckCurrentTune:
     LDA Tune0
     BNE @KeepPlaying
@@ -183,20 +185,20 @@ DriveTune0:
     LDY #$00
 :
     ; Get the index for the song bit: 1 to 8.
-    ;
     INY
     LSR
     BCC :-
     LDA TuneScripts0-1, Y
     STA TunePtr0
+
 @KeepPlaying:
     LDY TunePtr0
     INC TunePtr0
     LDA TuneScripts0, Y
     BMI @PrepNote
     BNE @PlayNote
+
     ; We've reached the end of the tune.
-    ;
     LDX #$90
     STX Sq0Duty_4000
     LDX #$18
@@ -211,6 +213,7 @@ DriveTune0:
     LDY TunePtr0
     INC TunePtr0
     LDA TuneScripts0, Y
+
 @PlayNote:
     JSR EmitSquareNote0
     LDA #$7F
@@ -231,16 +234,18 @@ PlayArrowSfx:
     STY Effect
     LDA #$05
     STA EffectCounter
+
     ; If "heart taken" is requested in tune channel 0, then cancel it.
-    ;
     LDA Tune0Request
     AND #$EF
     BNE ContinueArrowSfx
     STA Tune0Request
+
 ContinueArrowSfx:
     LDY EffectCounter
     LDA ArrowSfxNotes-1, Y
     BNE PlaySfxNote
+
 PlayStairsSfx:
     STY Effect
     LDA #$38
@@ -248,6 +253,7 @@ PlayStairsSfx:
 :
     LDA #$0D
     STA $68                     ; The sound of one step lasts $C frames.
+
 ContinueStairsSfx:
     DEC $68
     LDY $68
@@ -258,6 +264,7 @@ ContinueStairsSfx:
     BNE SetSfxVolumeLength
 :
     LDA StairsSfxNotes-1, Y
+
 PlaySfxNote:
     TAX
     AND #$0F
@@ -268,11 +275,13 @@ PlaySfxNote:
     LSR
     LSR
     ORA #$10
+
 SetSfxVolumeLength:
     STA NoiseVolume_400C
     LDA #$08
     STA NoiseLength_400F
     DEC EffectCounter
+
 SilenceSfxIfEnded:
     BNE :+
     LDA #$F0
@@ -286,14 +295,16 @@ PlaySwordSfx:
     STY Effect
     LDA #$0A
     STA EffectCounter
+
 ContinueSwordSfx:
     LDY EffectCounter
     LDA SwordSfxNotes-1, Y
     BNE PlaySfxNote
+
 DriveEffect:
     LDY EffectRequest
+
     ; $80 is a signal to silence samples and tune 1.
-    ;
     BMI SilenceSample
     LDA Effect
     LSR EffectRequest
@@ -326,14 +337,17 @@ DriveEffect:
     STY Effect
     LDA #$18
     STA EffectCounter
+
 @ContinueBombSfx:
     LDY EffectCounter
     LDA BombSfxNotes-1, Y
     BNE PlaySfxNote
+
 @PlayFlameSfx:
     STY Effect
     LDA #$20
     STA EffectCounter
+
 @ContinueFlameSfx:
     LDA EffectCounter
     LSR
@@ -349,18 +363,18 @@ DriveEffect:
     STA SeaSfxCounter
     LDA #$10
     STA $68                     ; The volume begins and ends at $10.
+
 @ContinueSeaSfx:
     LDA SeaSfxCounter
     CMP #$BF
     BCC :+
+
     ; SFX counter >= $BF. Increase volume fast.
-    ;
     INC $68
     BNE @SetSeaSfxParams
 :
     ; SFX counter < $BF. Decrease volume slowly down to $10 --
     ; when (counter MOD 8) = 7.
-    ;
     LDA SeaSfxCounter
     LSR
     BCC @SetSeaSfxParams
@@ -372,6 +386,7 @@ DriveEffect:
     CMP #$10
     BEQ @SetSeaSfxParams
     DEC $68
+
 @SetSeaSfxParams:
     LDA $68
     STA NoiseVolume_400C
@@ -416,12 +431,12 @@ DriveTune1:
 @SilenceThenPlay:
     JSR SilenceSong
     LDA #$80
+
 @ChangeTune:
     STA Tune1
     LDY #$00
 :
     ; Get the index for the song bit: 1 to 8.
-    ;
     INY
     LSR
     BCC :-
@@ -429,6 +444,7 @@ DriveTune1:
     STA TunePtr1
     LDA #$01
     STA NoteCounterTune1
+
 @KeepPlaying:
     DEC NoteCounterTune1
     BNE @CheckVibrate
@@ -437,10 +453,10 @@ DriveTune1:
     LDA TuneScripts1, Y
     BMI @PrepNote
     BNE @PlayNote
+
     ; We've reached the end of the tune.
     ;
     ; If tune is "Game Over", then go play it again.
-    ;
     LDA Tune1
     CMP #$40
     BEQ @ChangeTune
@@ -459,6 +475,7 @@ DriveTune1:
     LDY TunePtr1
     INC TunePtr1
     LDA TuneScripts1, Y
+
 @PlayNote:
     JSR EmitSquareNote1
     LDA #$7F
@@ -469,9 +486,9 @@ DriveTune1:
     STA NoteCounterTune1
     LDA #$1F
     STA CustomEnvelopeOffsetTune1
+
 @CheckVibrate:
     ; If the tune is not one of "flute" or "Link dying", then return.
-    ;
     LDA Tune1
     AND #$90
     BEQ @Exit
@@ -485,6 +502,7 @@ DriveTune1:
     LDX CurNoteLowPeriodSq1
     JSR VibratePitch
     STX Sq1Timer_4006
+
 @Exit:
     RTS
 
@@ -510,15 +528,18 @@ DriveSample:
     STA Sample
     LDA #$0F
     STA ApuStatus_4015
+
 @CheckBgSample:
     LDA BackgroundSample
     BNE :+
+
 @Exit:
     RTS
 
 @ChangeSampleLow:
     LDX #$00
     BEQ :+
+
 @ChangeSampleMid:
     LDX #$7F
     AND #$F0
@@ -572,6 +593,7 @@ EmitSquareNoteWithDutyAndSweep0:
     ; Begin unverified code 1C0A
     JSR SetSq0DutyAndSweep
     ; End unverified code
+
 ; Params:
 ; A: offset of a note in period table
 ;
@@ -584,6 +606,7 @@ EmitSquareNote0:
     LDA NotePeriodTable, Y
     ORA #$08
     STA Sq0Length_4003
+
 Exit:
     RTS
 
@@ -600,6 +623,7 @@ EmitSquareNoteWithDutyAndSweep1:
     ; Begin unverified code 1C28
     JSR SetSq1DutyAndSweep
     ; End unverified code
+
 ; Params:
 ; A: note ID (offset of note in period table)
 ;
@@ -644,25 +668,26 @@ EmitTriangleNote:
 VibratePitch:
     CMP #$10
     BCC @Exit
+
     ; Is bit 2 set?
-    ;
     LSR
     LSR
     LSR
     BCS @GoDown
+
     ; If not set, then add 1 to X.
-    ;
     TXA
     ADC #$01
     BNE :+
+
 @GoDown:
     ; If set, then subtract 1 from X.
-    ;
     TXA
     CLC
     ADC #$FF
 :
     TAX
+
 @Exit:
     RTS
 
@@ -692,16 +717,21 @@ DriveSong:
     BNE PlayNextPhrase
     LDY #$11
     BNE SetPrevPhraseIndex
+
 @PlayFirstDemoPhrase:
     LDY #$19
     BNE SetPrevPhraseIndex
+
 @PlayFirstUnderworldPhrase:
     LDY #$0F
     BNE SetPrevPhraseIndex
+
 @PlayFirstOverworldPhrase:
     LDY #$08
+
 SetPrevPhraseIndex:
     STY SongPhraseIndex
+
 PlayNextPhrase:
     TAX
     BMI @PlayNextDemoPhrase
@@ -711,14 +741,15 @@ PlayNextPhrase:
     BEQ @PlayNextUnderworldPhrase
     CMP #$10
     BNE @PlaySinglePhraseSong
+
     ; Play the next phrase of the ending song.
-    ;
     INC SongPhraseIndex
     LDY SongPhraseIndex
     CPY #$1A
     BNE PrepPhrase
     LDY #$14
     BNE SetPrevPhraseIndex
+
 @PlayNextUnderworldPhrase:
     INC SongPhraseIndex
     LDY SongPhraseIndex
@@ -726,6 +757,7 @@ PlayNextPhrase:
     BNE PrepPhrase
     LDY #$0F
     BNE SetPrevPhraseIndex
+
 @PlayNextOverworldPhrase:
     INC SongPhraseIndex
     LDY SongPhraseIndex
@@ -733,6 +765,7 @@ PlayNextPhrase:
     BNE PrepPhrase
     LDY #$09
     BNE SetPrevPhraseIndex
+
 @PlayNextDemoPhrase:
     INC SongPhraseIndex
     LDY SongPhraseIndex
@@ -740,15 +773,16 @@ PlayNextPhrase:
     BNE PrepPhrase
     LDY #$19
     BNE SetPrevPhraseIndex
+
 @PlaySinglePhraseSong:
     ; Get the index for the song bit: 2 to 6.
-    ;
     TXA
     LDY #$00
 :
     INY
     LSR
     BCC :-
+
 PrepPhrase:
     LDA SongTable-1, Y
     TAY
@@ -776,6 +810,7 @@ PrepPhrase:
     STA NoteCounterSongNoise
     LSR
     STA NoteOffsetSongSq1
+
 KeepPlayingSong:
     DEC NoteCounterSongSq1
     BNE ApplySq1Effects
@@ -785,12 +820,13 @@ KeepPlayingSong:
     BEQ @SongEnded
     BPL PlayNote
     BNE PrepNote
+
 @SongEnded:
     ; If this is a song that repeats, then go play again.
-    ;
     LDA Song
     AND #$F1
     BNE PlayAgain
+
 SilenceSong:
     LDA #$00
     STA Song
@@ -808,10 +844,10 @@ PrepNote:
     LDY NoteOffsetSongSq1
     INC NoteOffsetSongSq1
     LDA (SongScriptPtrLo), Y
+
 PlayNote:
     ; If something is playing in tune channel 1, then
     ; don't play a square note here.
-    ;
     LDX Tune1
     BNE @SkipSq1
     JSR EmitSquareNote1
@@ -822,13 +858,14 @@ PlayNote:
     JSR SetSq1DutyAndSweep
     LDA #$00
     STA SongVibrationCounterSq1
+
 @SkipSq1:
     LDA NoteLengthSongSq1
     STA NoteCounterSongSq1
+
 ApplySq1Effects:
     ; If something is playing in tune channel 1, then
     ; skip effects for square channel 1.
-    ;
     LDY Tune1
     BNE @HandleSq0
     INC SongVibrationCounterSq1
@@ -842,12 +879,13 @@ ApplySq1Effects:
     STX Sq1Sweep_4005
     LDA Song
     BPL @HandleSq0
+
     ; The demo/title song ($80) vibrates the pitch.
-    ;
     LDA SongVibrationCounterSq1
     LDX CurNoteLowPeriodSq1
     JSR VibratePitch
     STX Sq1Timer_4006
+
 @HandleSq0:
     LDY NoteOffsetSongSq0
     BEQ @HandleTrg
@@ -862,6 +900,7 @@ ApplySq1Effects:
     LDY NoteOffsetSongSq0
     INC NoteOffsetSongSq0
     LDA (SongScriptPtrLo), Y
+
 @PlaySq0:
     LDX Tune0
     BNE @SkipSq0
@@ -873,9 +912,11 @@ ApplySq1Effects:
     JSR SetSq0DutyAndSweep
     LDA #$00
     STA SongVibrationCounterSq0
+
 @SkipSq0:
     LDA NoteLengthSongSq0
     STA NoteCounterSongSq0
+
 @ApplySq0Effects:
     LDX Tune0
     BNE @HandleTrg
@@ -888,8 +929,8 @@ ApplySq1Effects:
     STA Sq0Duty_4000
     LDA Song
     BPL :+
+
     ; The demo/title song ($80) vibrates the pitch.
-    ;
     LDA SongVibrationCounterSq0
     LDX CurNoteLowPeriodSq0
     JSR VibratePitch
@@ -897,16 +938,17 @@ ApplySq1Effects:
 :
     LDA #$7F
     STA Sq0Sweep_4001
+
 @HandleTrg:
     LDA NoteOffsetSongTrg
     BNE :+
     ; Begin unverified code 1E1E
     JMP @HandleNoise
-
     ; End unverified code
 :
     DEC NoteCounterSongTrg
     BNE @ApplyTrgEffects
+
 @PrepNoteOrPassage:
     LDY NoteOffsetSongTrg
     INC NoteOffsetSongTrg
@@ -916,9 +958,9 @@ ApplySq1Effects:
     CMP #$F0
     BEQ @EndOfPassage
     BCC @PrepNoteTrg
+
     ; Control note >= $F1. The low nibble defines the number of
     ; repetititions of the passage starting at the next offset.
-    ;
     SEC
     SBC #$F0
     STA SongRepetitionsTrg
@@ -943,32 +985,35 @@ ApplySq1Effects:
     INC NoteOffsetSongTrg
     LDA (SongScriptPtrLo), Y
     BEQ @SetTrgLinear
+
 @PlayNoteTrg:
     JSR EmitTriangleNote
     LDA #$00
     STA SongVibrationCounterTrg
     LDX NoteLengthSongTrg
     STX NoteCounterSongTrg
+
 @ApplyTrgEffects:
     INC SongVibrationCounterTrg
     LDA SongVibrationCounterTrg
     LDX CurNoteLowPeriodTrg
     JSR VibratePitch
     STX TrgTimer_400A
+
     ; TODO: [05F1] ?
-    ;
     LDA $05F1
     BPL :+
     LDA #$1F
     BNE @SetTrgLinear
 :
     LDA #$FF
+
 @SetTrgLinear:
     STA TrgLinear_4008
+
 @HandleNoise:
     ; If the song is not demo nor ending, then return.
     ; They don't use noise.
-    ;
     LDA Song
     AND #$91
     BEQ @Exit
@@ -979,17 +1024,17 @@ ApplySq1Effects:
     INC NoteOffsetSongNoise
     LDA (SongScriptPtrLo), Y
     BNE :+
+
     ; We've reached the end of the track. Noise always repeats.
-    ;
     LDA FirstNoteIndexSongNoise
     STA NoteOffsetSongNoise
     BNE :-
 :
     JSR GetSongNoiseNoteLength
     STA NoteCounterSongNoise
+
     ; From the original control note, extract an index 0-3
     ; to look up noise parameters.
-    ;
     TXA
     AND #$3E
     LSR
@@ -1003,6 +1048,7 @@ ApplySq1Effects:
     STA NoisePeriod_400E
     LDA NoiseLengths, Y
     STA NoiseLength_400F
+
 @Exit:
     RTS
 
@@ -1031,6 +1077,7 @@ GetSongNoiseNoteLength:
     ROL
     ROL
     ROL
+
 ; Params:
 ; A: control note
 ;
@@ -1051,8 +1098,8 @@ GetSongNoteLengthWithAbsIndex:
     TAY
     LDA NoteLengthTable0, Y
     RTS
-
     ; End unverified code
+
 ; Unknown block
     .BYTE $CB
 
@@ -1111,6 +1158,7 @@ ShapeSongVolume:
     LSR
     LSR
     LSR
+
 @ReturnValue:
     ORA #$90
     RTS
@@ -1147,8 +1195,8 @@ NoteLengthTable3:
 NoteLengthTable4:
     .BYTE $3C, $50, $0A, $05, $14, $0D, $28, $0E
 
-
 .SEGMENT "BANK_00_ISR"
+
 
 
 
@@ -1168,11 +1216,10 @@ NoteLengthTable4:
     .BYTE $8D, $00, $E0, $4A, $8D, $00, $E0, $4A
     .BYTE $8D, $00, $E0, $4A, $8D, $00, $E0, $60
 
-
 .SEGMENT "BANK_00_VEC"
+
 
 
 
 ; Unknown block
     .BYTE $84, $E4, $50, $BF, $F0, $BF
-

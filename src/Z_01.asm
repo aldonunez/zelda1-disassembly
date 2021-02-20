@@ -1753,10 +1753,9 @@ InitWhirlwind:
 ; Params:
 ; X: object index
 ;
-;
-; Set the whirlwind's Y to Link's, X to 0, and type $2E.
-;
 SetUpWhirlwind:
+    ; Set the whirlwind's Y to Link's, X to 0, and type $2E.
+    ;
     LDA ObjY
     STA ObjY, X
     LDA #$00
@@ -2023,11 +2022,10 @@ CheckInitWhirlwindAndBeginUpdate:
 ; Returns:
 ; [0F]: untouched, or 0
 ;
-;
-; Look for a tile object among objects 1 to 12 that can block
-; the player's movement.
-;
 CheckTileObjectsBlocking:
+    ; Look for a tile object among objects 1 to 12 that can block
+    ; the player's movement.
+    ;
     LDX #$0C
 @LoopTileObj:
     LDA ObjType, X
@@ -2224,10 +2222,9 @@ LinkToSquareOffsetsY:
 ; Returns:
 ; X: 0
 ;
-;
-; If grid offset <> 0 or input direction = 0, return.
-;
 CheckPassiveTileObjects:
+    ; If grid offset <> 0 or input direction = 0, return.
+    ;
     LDA ObjGridOffset
     BNE @ReturnX0
     LDA ObjInputDir
@@ -2351,9 +2348,7 @@ CheckPassiveTileObjects:
 @ChooseObjType:
     ; Choose the right object type for the tile.
     ;
-    ;
-    ; Armos
-    LDA #$1E
+    LDA #$1E                    ; Armos
     LDY $02                     ; [02] collided tile
     CPY #$C0
     BCS :+                      ; If tile >= $C0, then instantiate an armos.
@@ -3337,10 +3332,8 @@ ShowLinkSpritesBehindHorizontalDoors:
 ; Y: direction of boundary that was crossed
 ; [0F]: original direction, or 0 if boundary was crossed
 ;
-;
-; Checking left direction.
 BoundDirectionHorizontally:
-    LDY #$02
+    LDY #$02                    ; Checking left direction.
     LDA ObjX, X
     STA $00                     ; [00] holds X coordinate
     CPX #$00
@@ -3407,10 +3400,8 @@ BoundDirectionReturn:
 ; Y: direction of boundary that was crossed
 ; [0F]: original direction, or 0 if boundary was crossed
 ;
-;
-; Checking up direction.
 BoundDirectionVertically:
-    LDY #$08
+    LDY #$08                    ; Checking up direction.
     LDA ObjY, X
     STA $00                     ; [00] holds Y coordinate
     CPX #$00
@@ -3618,10 +3609,9 @@ Negate:
 ; [0E]: $80 if blocked
 ; [0F]: moving direction, or 0 if boundary was crossed
 ;
-;
-; If a boundary was crossed, go set [0E] to $80 instead of moving.
-;
 MoveShot:
+    ; If a boundary was crossed, go set [0E] to $80 instead of moving.
+    ;
     JSR BoundByRoomWithA
     BEQ @ReturnBlocked
     ; Move the object as if grid offset were 0.
@@ -3660,10 +3650,9 @@ MoveShot:
 ; [0A]: vertical direction from origin to target
 ; [0B]: horizontal direction from origin to target
 ;
-;
-; Handle the horizontal.
-;
 GetDirectionsAndDistancesToTarget:
+    ; Handle the horizontal.
+    ;
     PHA
     TAY
     LDA #$02
@@ -3696,14 +3685,13 @@ GetDirectionsAndDistancesToTarget:
 ; Returns:
 ; Y: speed index (0 to 8) for the angle
 ;
-;
-; TODO: call it speed index or angle?
-; Store the middle speed index in [00]. It will be changed to the
-; right speed index to use incrementally.
-; Lower speed indexes yield faster X speeds and lower Y speeds.
-; Higher speed indexes yield faster Y speeds and lower X speeds.
-;
 _CalcDiagonalSpeedIndex:
+    ; TODO: call it speed index or angle?
+    ; Store the middle speed index in [00]. It will be changed to the
+    ; right speed index to use incrementally.
+    ; Lower speed indexes yield faster X speeds and lower Y speeds.
+    ; Higher speed indexes yield faster Y speeds and lower X speeds.
+    ;
     STY $00
     ; Assuming horizontal distance >= vertical distance, the
     ; index offset in [01] is negative (-1) to go towards the X axis.
@@ -3804,14 +3792,13 @@ SetBoomerangSpeed:
 ; [00]: the original value + 1, if < 8 pixels between origin and target
 ; [0A]: the direction from origin to target
 ;
-;
-; If the origin coordinate already >= target coordinate, then
-; the direction in [0A] is already correct. Otherwise, shift it right
-; to flip it.
-;
-; After this, [02] will >= [01].
-;
 GetOneDirectionAndDistanceToTarget:
+    ; If the origin coordinate already >= target coordinate, then
+    ; the direction in [0A] is already correct. Otherwise, shift it right
+    ; to flip it.
+    ;
+    ; After this, [02] will >= [01].
+    ;
     STA $01
     STY $02
     CPY $01
@@ -3907,12 +3894,11 @@ PlaceWeaponForPlayerState:
 ; A: $10 for right and down
 ; X: object index
 ;
-;
-; Set the offset choices to:
-;  $10 for right and down in [01]
-; -$10 for left and up in [02]
-;
 PlaceWeapon:
+    ; Set the offset choices to:
+    ;  $10 for right and down in [01]
+    ; -$10 for left and up in [02]
+    ;
     LDY #$F0
     STA $01
     STY $02
@@ -3945,10 +3931,9 @@ L69AB_Exit:
 ; A: chosen value, or 0 if not horizontal
 ; C: 0
 ;
-;
-; Set default value 0 in default address 0.
-;
 ChooseOffsetForDirectionH:
+    ; Set default value 0 in default address 0.
+    ;
     LDY #$00
     STY $00
     AND #$03
@@ -3968,14 +3953,13 @@ L69BE_Exit:
 ;
 ; Fails if no empty slot was found, or the blue candle was already used.
 ;
-;
-; Look in slots $10 and $11. If none are empty, return.
-; Otherwise, X will have the empty slot found.
-;
-; Note that it's possible that we fail to find an empty slot,
-; but the caller might find slot X occupied by a fire made earlier.
-;
 WieldCandle:
+    ; Look in slots $10 and $11. If none are empty, return.
+    ; Otherwise, X will have the empty slot found.
+    ;
+    ; Note that it's possible that we fail to find an empty slot,
+    ; but the caller might find slot X occupied by a fire made earlier.
+    ;
     LDX #$10
     LDA ObjState, X
     BEQ @NotInUse
@@ -4121,10 +4105,8 @@ UpdatePlayerPositionMarker:
 ; Params:
 ; A: room ID
 ;
-;
-; Push the room ID.
 UpdatePositionMarker:
-    PHA
+    PHA                         ; Push the room ID.
     AND #$70                    ; Sanitize the row of the room ID.
     LSR                         ; The rows in status bar map are 4 pixels tall.
     LSR
@@ -4386,12 +4368,11 @@ TryTakeRoomItem:
 ; X: object index
 ; [04]: item type
 ;
-;
-; If the lifetime timer of the item >= $F0, then return;
-; so that the player can't pick it up right away.
-;
-; [03A8][X] is used to count down the life of the item.
 TryTakeItem:
+    ; If the lifetime timer of the item >= $F0, then return;
+    ; so that the player can't pick it up right away.
+    ;
+    ; [03A8][X] is used to count down the life of the item.
     LDA Item_ObjItemLifetime, X
     CMP #$F0
     BCS L6C28_Exit
@@ -4478,9 +4459,7 @@ TakeItem:
     ;
     ; First, check the exceptions. If the item is a map, compass, or triforce; then go handle them.
     ;
-    ;
-    ; Map item slot
-    CPY #$11
+    CPY #$11                    ; Map item slot
     BEQ TakeClass0Complex
     CPY #$10                    ; Compass item slot
     BEQ TakeClass0Complex
@@ -4516,9 +4495,7 @@ CheckClass1:
     ; Class 1. We have a type of item with an amount.
     ; Item value is the amount to add.
     ;
-    ;
-    ; Heart container item slot
-    CPY #$18
+    CPY #$18                    ; Heart container item slot
     BEQ @TakeHeartContainer
     CPY #$1C                    ; 5 Rupees item slot
     BEQ Take5Rupees
@@ -4725,10 +4702,10 @@ PlayKeyTakenTune:
 ; Returns:
 ; Z: 1 if done updating
 ;
-; ObjTimer[12] is the world fade timer. Every 10 frames,
-; we step to the next half palette. There are 4 steps to fading.
-;
 AnimateWorldFading:
+    ; ObjTimer[12] is the world fade timer. Every 10 frames,
+    ; we step to the next half palette. There are 4 steps to fading.
+    ;
     LDA ObjTimer+12
     BNE @Exit                   ; If the timer hasn't expired, then only delay (return).
     LDA FadeCycle
@@ -4877,14 +4854,13 @@ CheckMazes:
 ; [00]: high byte of PPU address
 ; [01]: low byte of PPU address
 ;
-;
-; Turn the 16-bit value 08YY into the PPU address
-; ($2000 + (YY * 4)) by multiplying it by 4.
-;
-; Each row of tiles is 32 tiles (and bytes) long, and 8 pixels tall.
-; This is why the Y coordinate is multiplied by 4 (= 32 / 8).
-;
 MapScreenPosToPpuAddr:
+    ; Turn the 16-bit value 08YY into the PPU address
+    ; ($2000 + (YY * 4)) by multiplying it by 4.
+    ;
+    ; Each row of tiles is 32 tiles (and bytes) long, and 8 pixels tall.
+    ; This is why the Y coordinate is multiplied by 4 (= 32 / 8).
+    ;
     LDA #$08
     STA $00
     LDA $02
@@ -5004,10 +4980,8 @@ AnimateAndDrawObjectWalking:
 ; [00]: object X
 ; [01]: object Y
 ;
-;
-; Set [0C] mirrored.
 DrawObjectMirrored:
-    LDY #$01
+    LDY #$01                    ; Set [0C] mirrored.
     BNE :+
 ; Params:
 ; A: frame image
@@ -5053,10 +5027,8 @@ DrawObjectWithType:
 ; If the object is not mirrored, then it's horizontally flippable.
 ; But Link uses [0F] for flipping without checking [0C].
 ;
-;
-; [0D] holds frame.
 DrawObjectWithAnim:
-    STA $0D
+    STA $0D                     ; [0D] holds frame.
     STY $0E                     ; [0E] holds animation index.
     STX $08                     ; [08] holds object index/cycle sprite index
     ; Set the left and right sprite record offsets for CurSpriteIndex.
@@ -5142,9 +5114,9 @@ DrawObjectWithAnimAndSpecificSprites:
 ; [0343]: LeftSpriteOffset
 ; [0344]: RightSpriteOffset
 ;
-; If [0F] = 0, write the sprite pair with no further processing.
-;
 Anim_WriteHorizontallyFlippableSpritePair:
+    ; If [0F] = 0, write the sprite pair with no further processing.
+    ;
     LDA $0F
     BEQ Anim_WriteSpritePair
     ; Otherwise, reverse the two sides.
@@ -5176,9 +5148,9 @@ Anim_WriteHorizontallyFlippableSpritePair:
 ; [0343]: LeftSpriteOffset
 ; [0344]: RightSpriteOffset
 ;
-; If not currently invincible, then leave the attributes alone.
-;
 Anim_WriteSpritePair:
+    ; If not currently invincible, then leave the attributes alone.
+    ;
     LDY ObjInvincibilityTimer, X
     BEQ Anim_WriteSpritePairNotFlashing
     ; For both left and right sprites, indexed by Y register:
@@ -5261,10 +5233,8 @@ Anim_WriteStaticItemSpritesWithAttributes:
 ; Returns:
 ; [52]: ProcessedNarrowObj
 ;
-;
-; Save the item slot passed in Y.
 Anim_WriteItemSprites:
-    TYA
+    TYA                         ; Save the item slot passed in Y.
     PHA
     LDA #$00
     STA ProcessedNarrowObj
@@ -5290,10 +5260,8 @@ Anim_WriteItemSprites:
 ; Returns:
 ; [52]: ProcessedNarrowObj
 ;
-;
-; Store the object index in [08].
 Anim_WriteSpecificItemSprites:
-    STX $08
+    STX $08                     ; Store the object index in [08].
     LDA #$01                    ; Assume the object has two sides.
     STA $07
     LDA #$08                    ; Both sides are usually separated by 8 pixels.
@@ -5350,10 +5318,8 @@ Anim_WriteSpecificItemSprites:
 ; [0343]: LeftSpriteOffset
 ; [0344]: RightSpriteOffset
 ;
-;
-; All wide items that we process have mirrored sides.
 Anim_WriteMirroredSpritePair:
-    LDA $02
+    LDA $02                     ; All wide items that we process have mirrored sides.
     STA $03                     ; Make the right side the same as the left.
     LDA $05                     ; Flip the right side horizontally.
     EOR #$40
@@ -5504,8 +5470,7 @@ CheckMonsterCollisions:
     ; If the monster is a wallmaster or like-like and there's a hit
     ; (using [0C] flag), then set the monster's capture flag.
     ;
-    ; Wallmaster object type
-    CMP #$27
+    CMP #$27                    ; Wallmaster object type
     BEQ :+
     CMP #$17                    ; LikeLike object type
     BNE @Exit2
@@ -5523,10 +5488,9 @@ CheckMonsterCollisions:
 ; [02]: center X
 ; [03]: center Y
 ;
-;
-; Start with offset 8 for X and Y in [02] and [03].
-;
 GetObjectMiddle:
+    ; Start with offset 8 for X and Y in [02] and [03].
+    ;
     LDA #$08
     STA $02
     STA $03
@@ -5716,10 +5680,9 @@ HarmLink:
 ; [0D]: damage points high byte
 ; [0E]: damage points low byte
 ;
-;
-; If object type is not whirlwind, then make the "hurt" sound effect.
-;
 Link_BeHarmed:
+    ; If object type is not whirlwind, then make the "hurt" sound effect.
+    ;
     LDY ObjType, X
     CPY #$2E
     BEQ :+
@@ -5813,9 +5776,9 @@ Link_BeHarmed:
 ; Returns:
 ; [00]: weapon slot
 ;
-; If the weapon slot holds food (high bit of state is set), then return.
-;
 CheckMonsterBoomerangOrFoodCollision:
+    ; If the weapon slot holds food (high bit of state is set), then return.
+    ;
     LDA a:ObjState, Y
     ASL
     BCS :-
@@ -6020,9 +5983,8 @@ ResetShoveInfoAndInvincibilityTimer:
 ; Returns:
 ; [00]: weapon slot
 ;
-; [00] holds the weapon slot
 CheckMonsterSwordShotOrMagicShotCollision:
-    STY $00
+    STY $00                     ; [00] holds the weapon slot
     ; Set magic shot damage type ($10) in [09].
     ;
     LDA #$10
@@ -6088,9 +6050,8 @@ CheckMonsterSwordShotOrMagicShotCollision:
 ; Returns:
 ; [00]: weapon slot
 ;
-; [00] holds the weapon slot
 CheckMonsterBombOrFireCollision:
-    STY $00
+    STY $00                     ; [00] holds the weapon slot
     ; Set up parameters for a fire.
     ;
     LDA #$20
@@ -6155,9 +6116,8 @@ SwordDamagePoints:
 ; [00]: weapon slot
 ; [06]: 1 if objects collide
 ;
-; [00] holds the weapon slot
 CheckMonsterSwordCollision:
-    STY $00
+    STY $00                     ; [00] holds the weapon slot
     ;Set sword damage type (1) in [09].
     ;
     LDA #$01
@@ -6182,9 +6142,8 @@ CheckMonsterSwordCollision:
 ; Returns:
 ; [06]: 1 if objects collide
 ;
-; [07] damage points
 CheckMonsterStabbingCollision:
-    STA $07
+    STA $07                     ; [07] damage points
     ; If Link's direction is vertical, then set collision thresholds accordingly:
     ; [0D] := $C
     ; [0E] := $10
@@ -6224,9 +6183,8 @@ CheckMonsterStabbingCollision:
 ; [00]: weapon slot
 ; [06]: 1 if objects collide
 ;
-; [00] holds the weapon slot
 CheckMonsterArrowOrRodCollision:
-    STY $00
+    STY $00                     ; [00] holds the weapon slot
     LDA a:ObjState, Y
     ; If the weapon is a rod, then
     ; go check a stabbing collision using rod parameters.
@@ -6412,11 +6370,10 @@ CheckMonsterSlenderWeaponCollision2:
 ; [0A]: horizontal distance
 ; [0B]: vertical distance
 ;
-;
-; Use the same threshold value horizontally and vertically.
-; Copy it to [0D] for horizontal threshold, and [0E] for vertical one.
-;
 DoObjectsCollide:
+    ; Use the same threshold value horizontally and vertically.
+    ; Copy it to [0D] for horizontal threshold, and [0E] for vertical one.
+    ;
     STA $0D
     STA $0E
 ; Params:
@@ -6436,10 +6393,9 @@ DoObjectsCollide:
 ; [0A]: horizontal distance
 ; [0B]: vertical distance
 ;
-;
-; Reset [06] to indicate no collision by default.
-;
 DoObjectsCollideWithThresholds:
+    ; Reset [06] to indicate no collision by default.
+    ;
     LDA #$00
     STA $06
     LDY $00
@@ -6491,14 +6447,13 @@ DoObjectsCollideWithThresholds:
 ; On the other hand, if a weapon attacks a monster,
 ; the monster sets [00] to the weapon's slot.
 ;
-;
-; If a weapon attacks a monster, and the weapon's damage
-; type matches the monster's invincibility mask;
-; then return without shoving.
-;
-; If a monster attacks Link, then damage type will be 0.
-;
 BeginShove:
+    ; If a weapon attacks a monster, and the weapon's damage
+    ; type matches the monster's invincibility mask;
+    ; then return without shoving.
+    ;
+    ; If a monster attacks Link, then damage type will be 0.
+    ;
     LDY $00
     CPX #$0D
     BCS :+

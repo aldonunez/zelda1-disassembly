@@ -816,19 +816,15 @@ MoveAndDrawRoomItem:
     BEQ AnimateRoomItemOnMonster
     ; A monster is not carrying the item. So draw the item as usual.
     ;
-    ;
-    ; Room item is in object slot $13.
-    LDX #$13
+    LDX #$13                    ; Room item is in object slot $13.
 AnimateRoomItemObject:
     LDA RoomItemId              ; Pass item type to AnimateItemObject.
 ; Params:
 ; A: item type
 ; X: object index
 ;
-;
-; Save the item ID.
 AnimateItemObject:
-    PHA
+    PHA                         ; Save the item ID.
     ; If the lifetime timer of the item >= $F0 and even, then
     ; return without drawing. This makes it flash at first.
     ;
@@ -846,9 +842,7 @@ AnimateItemObject:
     ; Look up the item description for this item ID.
     ; Store the item value part of it in [04].
     ;
-    ;
-    ; Restore the item ID.
-    PLA
+    PLA                         ; Restore the item ID.
     TAX                         ; X now has item ID.
     LDA ItemIdToDescriptor, X
     CMP #$30
@@ -949,9 +943,7 @@ DrawItemBySlot:
 DrawStatusBarPotion:
     ; We have a potion to draw.
     ;
-    ;
-    ; Potion item slot.
-    LDX #$07
+    LDX #$07                    ; Potion item slot.
     STX SelectedItemSlot
     BNE DrawStatusBarItemB      ; Go draw the potion.
 DrawStatusBarItemsAndEnsureItemSelected:
@@ -1047,10 +1039,8 @@ CheckLiftItem:
 ; Params:
 ; [0505]: item type
 ;
-;
-; Set item X the same as Link's.
 SetUpAndDrawLinkLiftingItem:
-    LDA ObjX
+    LDA ObjX                    ; Set item X the same as Link's.
     STA ObjX+19
     LDA ObjY                    ; Set item's Y $10 pixels above Link's.
     SEC
@@ -1059,10 +1049,8 @@ SetUpAndDrawLinkLiftingItem:
 ; Params:
 ; [0505]: item type
 ;
-;
-; We're dealing with Link object.
 DrawLinkLiftingItem:
-    LDX #$00
+    LDX #$00                    ; We're dealing with Link object.
     JSR Anim_FetchObjPosForSpriteDescriptor
     JSR Anim_SetSpriteDescriptorAttributes    ; Set 0 sprite attributes. 0 was returned above.
     STA $0C                     ; Set frame 0.
@@ -1116,11 +1104,10 @@ GetUniqueRoomId:
 ; X: object index
 ; [F7]: not 0 to switch to bank 4 before returning
 ;
-;
-; First, cue the transfer of the 4 tiles to nametable 0.
-;
-; [05] holds the first tile.
 ChangeTileObjTiles:
+    ; First, cue the transfer of the 4 tiles to nametable 0.
+    ;
+    ; [05] holds the first tile.
     STA $05
     TXA                         ; Save object index.
     PHA
@@ -1332,9 +1319,7 @@ InitMode7:
     ; After the last submode (5 or 6), sprite-0 check was enabled.
     ; So, set the appropriate mirroring for scrolling during mode update.
     ;
-    ;
-    ; TODO: [$F3] ?
-    LDA _Unknown_F3
+    LDA _Unknown_F3             ; TODO: [$F3] ?
     BNE @Exit
     INC _Unknown_F3
     ; If player is facing horizontally, then enable vertical mirroring;
@@ -1500,9 +1485,7 @@ InitMode5Play:
     ; Choose a palette transfer buf for a tile object that has sprites.
     ; Rock, gravestone, Armos1, Armos2
     ;
-    ;
-    ; Ghost palette row
-    LDX #$20
+    LDX #$20                    ; Ghost palette row
     LDA ObjType+11
     CMP #$65
     BEQ @SelectTransferBufAndFinishInitPlay    ; If tile object type is gravestone ($65), go cue transfer buf $20.
@@ -1513,9 +1496,7 @@ InitMode5Play:
     ; It's a rock tile object.
     ; Choose palette based on inner palette attribute to match it.
     ;
-    ;
-    ; Brown palette row
-    LDX #$24
+    LDX #$24                    ; Brown palette row
 @UseXOrGreenPalette:
     LDY RoomId
     LDA LevelBlockAttrsB, Y
@@ -1709,9 +1690,7 @@ UpdateMode4and6EnterLeave:
     ; * entering in mode 4 (method 2)
     ; * leaving in mode 6
     ;
-    ;
-    ; If relative position reaches 0, 8, or -8; then go to the next mode.
-    LDA ObjGridOffset
+    LDA ObjGridOffset           ; If relative position reaches 0, 8, or -8; then go to the next mode.
     BEQ GoToNextModeResetGridOffset
     CMP #$08
     BEQ GoToNextModeResetGridOffset
@@ -1740,7 +1719,6 @@ L1EBF8_Exit:
 
 StepOutside:
     ; We're stepping out of underground or cellar.
-    ;
     ;
     ; If in UW, then go finish the mode.
     ;
@@ -2120,10 +2098,8 @@ GetCollidableTileStill:
 ; A: tile
 ; [049E][X]: tile
 ;
-;
-; Use -8 ($F8) for the hotspot offset, if it's Link.
 GetCollidingTileMoving:
-    LDY #$F8
+    LDY #$F8                    ; Use -8 ($F8) for the hotspot offset, if it's Link.
     CPX #$00
     BEQ :+                      ; If it's not Link,
     LDY #$F0                    ; then use -$10 ($F0) for the hotspot offset.
@@ -2528,7 +2504,6 @@ WieldFlute:
 @FluteSecretNotFound:
     ; Not found.
     ;
-    ;
     ; Pop and throw away the quest number.
     ;
     PLA
@@ -2712,10 +2687,8 @@ Walker_Move:
 ; X: object index
 ; [0F]: direction
 ;
-;
-; Positive limit is 8 for Link.
 MoveObject:
-    LDA #$08
+    LDA #$08                    ; Positive limit is 8 for Link.
     LDY #$F8                    ; Negative limit is -8 for Link.
     CPX #$00
     BEQ :+                      ; If the object isn't Link,
@@ -2803,14 +2776,13 @@ PlayerScreenEdgeBounds:
 ;
 ; If no walkable direction is found, then stop moving.
 ;
-;
-; if is player
-;   if at doorway
-;     go handle a walkable direction
-;   if blocked by door
-;     return
-;
 Walker_CheckTileCollision:
+    ; if is player
+    ;   if at doorway
+    ;     go handle a walkable direction
+    ;   if blocked by door
+    ;     return
+    ;
     CPX #$00
     BNE @CheckGridOffset
     LDA DoorwayDir
@@ -2965,9 +2937,7 @@ CheckScreenEdge:
     ; If the single moving direction is vertical, use Y.
     ; Else use X coordinate.
     ;
-    ;
-    ; Call this to get a single moving direction.
-    JSR GetOppositeDir
+    JSR GetOppositeDir          ; Call this to get a single moving direction.
     LDA ReverseDirections, Y
     AND #$0C
     BNE :+
@@ -3271,9 +3241,7 @@ Link_EndMoveAndAnimate:
     STA ObjDir, X
     ; Add appropriate offset to player's position to set the ladder's position.
     ;
-    ;
-    ; Call this for the reverse direction index.
-    JSR GetOppositeDir
+    JSR GetOppositeDir          ; Call this for the reverse direction index.
     LDA ObjX
     CLC
     ADC LinkToLadderOffsetsX, Y
@@ -3284,9 +3252,7 @@ Link_EndMoveAndAnimate:
     STA ObjY, X
     ; Set the ladder object's type. Reset shove params and invincibility timer.
     ;
-    ;
-    ; Ladder
-    LDA #$5F
+    LDA #$5F                    ; Ladder
     STA ObjType, X
     JSR ResetShoveInfo
     STA ObjInvincibilityTimer, X
@@ -3297,9 +3263,7 @@ Link_EndMoveAndAnimate:
 @CheckWarps:
     ; If in mode 5, check warps.
     ;
-    ;
-    ; Set X to 0 to refer to Link object.
-    LDX #$00
+    LDX #$00                    ; Set X to 0 to refer to Link object.
     LDA GameMode
     CMP #$05
     BNE @Animate
@@ -3364,9 +3328,7 @@ Link_EndMoveAndAnimate:
 @HandleMagicShield:
     ; Magic shield.
     ;
-    ;
-    ; Look at the left tile.
-    LDX #$01
+    LDX #$01                    ; Look at the left tile.
     LDA ObjDir
     LSR
     BCC :+                      ; If facing right,
@@ -3453,9 +3415,7 @@ DrawSwordShotOrMagicShot:
     ; Set the sprite attributes to (base attribute OR (frame counter AND 3)).
     ; This makes the shot flash by cycling all the palettes, one each frame.
     ;
-    ;
-    ; Call this only to get reverse direction index.
-    JSR GetOppositeDir
+    JSR GetOppositeDir          ; Call this only to get reverse direction index.
     LDA FrameCounter
     AND #$03
     ORA RDirectionToWeaponBaseAttribute, Y
@@ -3678,9 +3638,7 @@ SpreadShot:
     ; - Third turn:  loop index = 1, negate Y offset [03]
     ; - Fourth turn: doesn't matter
     ;
-    ;
-    ; Get the loop index.
-    PLA
+    PLA                         ; Get the loop index.
     PHA
     TAY
     CPY #$01                    ; The first two loop indexes coincide with offset from address 0.
@@ -4285,11 +4243,10 @@ CalcBoomerangFrame:
 ; Params:
 ; Y: reverse direction index that the weapon is facing
 ;
-;
-; [00] and [01] will hold sprite X and Y.
-; Begin with the horizontal and vertical offsets.
-;
 OffsetAndDrawArrow:
+    ; [00] and [01] will hold sprite X and Y.
+    ; Begin with the horizontal and vertical offsets.
+    ;
     LDA RDirectionToOffsetsX, Y
     STA $00
     LDA RDirectionToOffsetsY, Y
@@ -4494,9 +4451,7 @@ UpdateSwordOrRod:
     ; Set Y to the right item slot to pass to the routine to write sprites:
     ; sword or rod
     ;
-    ;
-    ; Sword slot
-    LDY #$00
+    LDY #$00                    ; Sword slot
     CPX #$0D
     BEQ :+
     LDY #$08                    ; Rod slot
@@ -4673,9 +4628,7 @@ UpdateFire:
 @DrawAndCheckCollisions:
     ; Advance the animation counter, and draw.
     ;
-    ;
-    ; 4 frames in every animation cycle.
-    LDA #$04
+    LDA #$04                    ; 4 frames in every animation cycle.
     JSR Anim_AdvanceAnimCounterAndSetObjPosForSpriteDescriptor
     JSR Anim_SetObjHFlipForSpriteDescriptor
     JSR Anim_SetSpriteDescriptorRedPaletteRow
@@ -4892,10 +4845,9 @@ DrawBombOrCloudAt:
 ; [00]: X
 ; [01]: Y
 ;
-;
-; Set frame image = minor state - 2.
-;
 DrawBombOrCloudNoFlashing:
+    ; Set frame image = minor state - 2.
+    ;
     LDA ObjState, X
     AND #$0F
     SEC
@@ -4906,10 +4858,8 @@ DrawBombOrCloudNoFlashing:
 ; [00]: X
 ; [01]: Y
 ;
-;
-; [0C] frame image
 DrawCloud:
-    STA $0C
+    STA $0C                     ; [0C] frame image
     LDY #$00
     STY $0F                     ; [0F] no horizontal flipping
     ; Write sprites with blue sprite palette row and bomb item slot.
@@ -5066,9 +5016,7 @@ SetUpWalkingSprites:
     BEQ SetUpHorizontalWalkingSprites
     ; Facing up or down.
     ;
-    ;
-    ; Assume animation frame 3 (up).
-    LDY #$03
+    LDY #$03                    ; Assume animation frame 3 (up).
     AND #$08
     BNE Anim_SetObjHFlipForSpriteDescriptor
     DEY                         ; If down, then use animation frame 2 (down).
@@ -5088,9 +5036,7 @@ Anim_SetObjHFlipForSpriteDescriptor:
 SetUpHorizontalWalkingSprites:
     ; Facing left or right.
     ;
-    ;
-    ; Assume animation frame 0 (legs apart).
-    LDY #$00
+    LDY #$00                    ; Assume animation frame 0 (legs apart).
     LDA ObjAnimFrame, X
     BEQ :+
     INY                         ; If walking frame 1, then animation frame 1 (legs together).
@@ -5867,10 +5813,9 @@ UpdateFluteSecret:
 ; Params:
 ; Y: a point in the cycle (0 to $B)
 ;
-;
-; Copy water palette (palette row 3) transfer buf to dynamic
-; transfer buf.
 CueTransferPondPaletteRow:
+    ; Copy water palette (palette row 3) transfer buf to dynamic
+    ; transfer buf.
     TYA
     PHA
     LDY #$07

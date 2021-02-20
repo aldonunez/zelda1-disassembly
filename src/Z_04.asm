@@ -794,10 +794,8 @@ DrawObjectMirroredOverLink:
 ; A: object type
 ; X: shooter's object index
 ;
-;
-; [00] holds the object type.
 ShootFireball:
-    STA $00
+    STA $00                     ; [00] holds the object type.
     ; Return, if there's no empty slot.
     ;
     JSR FindEmptyMonsterSlot
@@ -1640,9 +1638,7 @@ UpdateStatues:
     ; 2. If there is more than one fireball made in a frame,
     ;    then two of them will come from the same statue.
     ;
-    ;
-    ; Save the fireball pattern.
-    TYA
+    TYA                         ; Save the fireball pattern.
     PHA
     JSR FindEmptyMonsterSlot
     CMP #$01
@@ -1694,9 +1690,7 @@ UpdateStatues:
     ; Add it to the fireball index in X register to get the index of
     ; the coordinate we want within each coordinate list.
     ;
-    ;
-    ; Pattern
-    LDY $0B
+    LDY $0B                     ; Pattern
     TXA
     CLC
     ADC StatuePatternToBasePositionIndex, Y
@@ -2562,9 +2556,8 @@ Jumper_PointBoulderDownward:
 ; A: acceleration
 ; Y: max speed high byte
 ;
-; [00] holds the acceleration
 Jumper_MoveY:
-    STA $00
+    STA $00                     ; [00] holds the acceleration
     STY $02                     ; [02] holds the max speed high byte
     ; Add the high speed byte to the Y coordinate.
     ;
@@ -3784,10 +3777,8 @@ UpdateTree:
 ; Params:
 ; X: object index of the tile object
 ;
-;
-; First tile of stairs
 RevealAndFlagSecretStairsObj:
-    LDA #$70
+    LDA #$70                    ; First tile of stairs
 ; Params:
 ; A: the first tile of tile object
 ; X: object index
@@ -3834,10 +3825,9 @@ SecretQuestNumbers:
 ; C: 1 if there is a mismatch between current quest
 ;    and quest number for the secret in the room
 ;
-;
-; The quest secret is in the high two bits.
-;
 IsQuestSecretMismatch:
+    ; The quest secret is in the high two bits.
+    ;
     LDA LevelBlockAttrsByteF
     LSR
     LSR
@@ -11717,10 +11707,9 @@ L13307_Exit:
 ; Turn towards the player a number of times.
 ; Then go to state 1. After each turn delay $10 frames.
 ;
-;
-; Delay until timer = 0.
-;
 Flyer_Chase:
+    ; Delay until timer = 0.
+    ;
     LDA ObjTimer, X
     BNE L13307_Exit             ; If timer is not expired, then return.
     ; Decrease the turn counter.
@@ -11854,10 +11843,9 @@ TestDir:
 ; Delay and turn randomly a number of times.
 ; The go to state 1. After each turn, delay $10 frames.
 ;
-;
-; Delay until timer = 0.
-;
 Flyer_Wander:
+    ; Delay until timer = 0.
+    ;
     LDA ObjTimer, X
     BNE L133AC_Exit
     ; Decrease the turn counter.

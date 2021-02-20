@@ -434,10 +434,8 @@ UpdateMenuScrollUp:
 ; Params:
 ; A: vertical velocity of menu scrolling
 ;
-;
-; [00] holds the vertical velocity of menu scrolling.
 MovePositionMarkers:
-    STA $00
+    STA $00                     ; [00] holds the vertical velocity of menu scrolling.
     ; If Link's position marker is visible, then move it by the velocity in [00].
     ;
     LDA Sprites+84
@@ -511,9 +509,7 @@ UpdateMenuStartOW:
     ; have this piece. So, go loop again, and leave the tile in the
     ; empty state.
     ;
-    ;
-    ; [06] level test mask
-    LDA $06
+    LDA $06                     ; [06] level test mask
     BIT InvTriforce
     BEQ @NextLoopTile
     ; We have the triforce piece.
@@ -843,9 +839,7 @@ InitMode7_Sub3And4_TransferPlayAreaAttrsToNT2:
     ; Transfer half of a room's play area attributes to nametable 2.
     ; The top half in submode 3, and the bottom half in submode 4.
     ;
-    ;
-    ; Test player's direction for up (8).
-    LDA #$08
+    LDA #$08                    ; Test player's direction for up (8).
     BIT ObjDir
     BNE @Vertical
     LSR                         ; Test player's direction for down (4).
@@ -854,9 +848,7 @@ InitMode7_Sub3And4_TransferPlayAreaAttrsToNT2:
 @Vertical:
     ; Scrolling up or down.
     ;
-    ;
-    ; This will mean PPU address $2BC0.
-    LDA #$C0
+    LDA #$C0                    ; This will mean PPU address $2BC0.
 @TransferHalfPlayAreaAttrs:
     LDY #$17                    ; This is the offset of the end of the first half of play area NT attributes.
     LDX GameSubmode
@@ -868,7 +860,6 @@ InitMode7_Sub3And4_TransferPlayAreaAttrsToNT2:
 
 @Horizontal:
     ; Scrolling left or right.
-    ;
     ;
     ; This will mean PPU address $2BD0, 64 pixels down from
     ; the top of NT 2. See submode 2 for an explanation of
@@ -895,7 +886,6 @@ InitMode7_Sub5:
     BNE @CheckDark
     ; Scrolling up.
     ;
-    ;
     ; Lay out the next room now, because we had to transfer
     ; the current one to NT 2 earlier. Up is the only direction
     ; that draws the current room to NT 2.
@@ -920,9 +910,7 @@ InitMode7_Sub5:
 @DarkenRoom:
     ; Going from room with light to a dark room.
     ;
-    ;
-    ; The next room will not be lit yet.
-    LDA #$00
+    LDA #$00                    ; The next room will not be lit yet.
     STA CandleState
     LDA #$40                    ; Start a fade-to-black cycle.
     STA FadeCycle
@@ -941,9 +929,7 @@ InitMode7_Sub6:
 InitMode7_Finish:
     ; Finish initializing this mode, and start updating it.
     ;
-    ;
-    ; Set current room to next room.
-    LDA NextRoomId
+    LDA NextRoomId              ; Set current room to next room.
     STA RoomId
     JSR WriteAndEnableSprite0
     JSR BeginUpdateMode
@@ -1058,9 +1044,7 @@ UpdateMode7Scroll_Sub0:
     BEQ ScrollHorizontal
     ; Scrolling down.
     ;
-    ;
-    ; Start scrolling from $2100, the top of play area in NT 0 (current room).
-    LDA #$21
+    LDA #$21                    ; Start scrolling from $2100, the top of play area in NT 0 (current room).
     STA VScrollAddrHi
     LDA #$FF                    ; Start past the first row, because the scrolling process first increments it.
     STA CurRow
@@ -1079,9 +1063,7 @@ ScrollHorizontal:
     ; end of the play area; so that we don't write to a part of
     ; the scroll region.
     ;
-    ;
-    ; $A0 in UW.
-    LDY #$A0
+    LDY #$A0                    ; $A0 in UW.
     LDX CurLevel
     BNE :+
     LDY #$E0                    ; $E0 in OW.
@@ -1091,9 +1073,7 @@ ScrollHorizontal:
     BEQ @SetColumn
     ; Scrolling left.
     ;
-    ;
-    ; $81 in UW.
-    LDY #$81
+    LDY #$81                    ; $81 in UW.
     LDX CurLevel
     BNE @SetColumn
     LDY #$41                    ; $41 in OW.
@@ -1104,9 +1084,7 @@ ScrollHorizontal:
 ScrollUp:
     ; Scrolling up.
     ;
-    ;
-    ; Start scrolling from $2800, the top of play area in NT 2 (current room).
-    LDA #$28
+    LDA #$28                    ; Start scrolling from $2800, the top of play area in NT 2 (current room).
     STA VScrollAddrHi
     LDA #$16                    ; Start past the last row, because the scrolling process first decrements it.
     STA CurRow
@@ -1121,9 +1099,7 @@ ChooseAttrSourceAndDestForSubmode:
     ; A: low PPU address
     ; Y: end offset in PlayAreaAttrs to copy from
     ;
-    ;
-    ; Low byte $D0 mean destination PPU address of $23D0, $27D0, $2BD0, or $2FD0.
-    LDA #$D0
+    LDA #$D0                    ; Low byte $D0 mean destination PPU address of $23D0, $27D0, $2BD0, or $2FD0.
     LDY #$17                    ; This is the offset of the end of the first half of play area NT attributes.
     LDX GameSubmode
     BEQ :+                      ; Return.
@@ -1134,10 +1110,8 @@ ChooseAttrSourceAndDestForSubmode:
 ; A: low PPU address + $18
 ; Y: end offset of second half of play area NT attributes
 ;
-;
-; This is the offset of the end of the second half of play area NT attributes.
 GetPlayAreaAttrsBottomHalfInfo:
-    LDY #$2F
+    LDY #$2F                    ; This is the offset of the end of the second half of play area NT attributes.
     CLC
     ADC #$18                    ; Add $18 to point to the bottom half of NT attributes in PPU memory.
 :
@@ -1221,9 +1195,7 @@ UpdateMode7Scroll_Sub4And5_TransferNTAttrs:
     BEQ CueTransferPlayAreaAttrsHalfAndAdvanceSubmodeNT0    ; then transfer top half.
     ; Transfer bottom half.
     ;
-    ;
-    ; Save low byte of PPU address of top of play area attributes.
-    PHA
+    PHA                         ; Save low byte of PPU address of top of play area attributes.
     LDA ObjDir
     CMP #$04
     BCS :+                      ; If scrolling horizontally,
@@ -1236,10 +1208,8 @@ UpdateMode7Scroll_Sub4And5_TransferNTAttrs:
 ; A: low PPU address
 ; Y: end offset in PlayAreaAttrs to copy from
 ;
-;
-; High byte of destination PPU address for play area attributes.
 CueTransferPlayAreaAttrsHalfAndAdvanceSubmodeNT0:
-    LDX #$23
+    LDX #$23                    ; High byte of destination PPU address for play area attributes.
     JMP CueTransferPlayAreaAttrsHalfAndAdvanceSubmode
 
 CopyColumnOrRowToTileBuf:
@@ -1248,9 +1218,7 @@ CopyColumnOrRowToTileBuf:
     ; If CurRow = PrevRow, does nothing. After a row is copied,
     ; PrevRow is assigned CurRow.
     ;
-    ;
-    ; If CurRow is valid, then copy row.
-    LDA CurRow
+    LDA CurRow                  ; If CurRow is valid, then copy row.
     CMP #$16
     BCS @CheckColumn
     CMP PrevRow                 ; unless CurRow = LastRow, then don't repeat
@@ -2002,10 +1970,8 @@ AssignObjSpawnPositions:
 ; Returns:
 ; C: 1 if unwalkable
 ;
-;
-; Save %Y.
 IsSafeToSpawn:
-    TYA
+    TYA                         ; Save %Y.
     PHA
     JSR GetCollidableTileStill
     PLA                         ; Restore %Y.
@@ -2019,10 +1985,9 @@ IsSafeToSpawn:
 ; Returns:
 ; C: 1 if unwalkable
 ;
-;
-; Get the absolute X distance to Link.
-;
 IsDistanceSafeToSpawn:
+    ; Get the absolute X distance to Link.
+    ;
     LDA ObjX
     SEC
     SBC ObjX, X
@@ -2551,10 +2516,8 @@ UpdateMode11Death_Sub0:
 ; A: low PPU address
 ; Y: end offset in PlayAreaAttrs to copy from
 ;
-;
-; Use nametable 2.
 CueTransferPlayAreaAttrsHalfAndAdvanceSubmodeNT2:
-    LDX #$2B
+    LDX #$2B                    ; Use nametable 2.
 ; Params:
 ; X: high PPU address
 ; A: low PPU address
@@ -2834,9 +2797,7 @@ MaskInputInBorder:
     ; If the coordinate crosses (<) the boundary, then
     ; go mask buttons.
     ;
-    ;
-    ; Get coordinate in [02].
-    LDA $02
+    LDA $02                     ; Get coordinate in [02].
     CMP BorderBounds, Y
     BCC @MaskButtons
 @ExcludeNone:
@@ -3209,10 +3170,9 @@ CheckCaveEdge:
 ; Returns:
 ; [0F]: movement direction or 0
 ;
-;
-; If the ladder's not in use, return.
-;
 CheckLadder:
+    ; If the ladder's not in use, return.
+    ;
     LDX LadderSlot
     BEQ @Exit
     ; If the ladder is done (state 0), go put away the ladder.
@@ -3650,7 +3610,6 @@ Link_ModifyDirInDoorway:
     ; In a doorway (UW), you can only move in the direction
     ; that you entered it or the opposite.
     ;
-    ;
     ; If not in a doorway nor moving, then return.
     ;
     LDA DoorwayDir
@@ -3745,10 +3704,9 @@ DoorwayBoundsMaxUnder:
 ;
 ; Otherwise, [0F] will be changed from 0 to the door's direction.
 ;
-;
-; If already in a doorway, go handle it separately.
-;
 CheckDoorway:
+    ; If already in a doorway, go handle it separately.
+    ;
     LDA DoorwayDir
     BNE @InDoorway
 @SearchOverflowBounds:
@@ -4189,12 +4147,11 @@ CheckBossSoundEffectUW:
 ; vertically. The point of this routine is to access them
 ; horizontally in order to transfer them to a nametable.
 ;
-;
-; For the direction index in [09], look up the base offset of the
-; set of 4 indexes in HorizontalDoorFaceIndexes that point to
-; the door face tiles at [02:03].
-;
 WriteDoorFaceTileHorizontally:
+    ; For the direction index in [09], look up the base offset of the
+    ; set of 4 indexes in HorizontalDoorFaceIndexes that point to
+    ; the door face tiles at [02:03].
+    ;
     LDY $09
     LDA HorizontalDoorFaceIndexesBaseOffsets, Y
     ; Add [07] to the base offset we got above. This yields one
@@ -4546,10 +4503,8 @@ ColumnHeapUWCellar:
 ; 4: S
 ; 8: N
 ;
-;
-; Start with single-bit mask 1.
 FindDoorTypeByDoorBit:
-    LDA #$01
+    LDA #$01                    ; Start with single-bit mask 1.
     STA $01
     LDA #$03                    ; Test 4 directions.
     STA $03
@@ -4820,9 +4775,7 @@ L_LayOutDoors_LoopHalves:
     ; Also at this point, the door bit in CurOpenedDoors
     ; has been cleared, if the type was "open" or any wall.
     ;
-    ;
-    ; Save the provisional face.
-    PHA
+    PHA                         ; Save the provisional face.
     ; If the current direction points to a door that has been opened,
     ; then see if we need to set door flags.
     ;
@@ -4835,9 +4788,7 @@ L_LayOutDoors_LoopHalves:
     ; The current direction points to a door that has been opened.
     ; It can only be "bombable", "key", "key 2", or "shutter".
     ;
-    ;
-    ; Save provisional door face in Y register.
-    TAY
+    TAY                         ; Save provisional door face in Y register.
     PLA                         ; Get the direction index.
     PHA
     TAX                         ; Put direction index in X.
@@ -4873,7 +4824,6 @@ L_LayOutDoors_LoopHalves:
     ; 5  4  key
     ; 6  4  key 2
     ; 7  4  shutter
-    ;
     ;
     ; If handling the first half [06], then calculate OpenDoorwayMask.
     ;
@@ -4912,9 +4862,7 @@ L_LayOutDoors_LoopHalves:
     ; 6  2   1   key 2
     ; 7  3   1   shutter
     ;
-    ;
-    ; Get the direction index.
-    PLA
+    PLA                         ; Get the direction index.
     PHA
     JSR FetchDoorAddrsFaceTilesSrcAndPlayAreaDst
     ; If handling the second half, then offset to the second half
@@ -5104,9 +5052,7 @@ UpdateDoors:
     STA $04
     ; Write the transfer record header for the door.
     ;
-    ;
-    ; VRAM address high byte of door
-    LDA $00
+    LDA $00                     ; VRAM address high byte of door
     STA DynTileBuf, X
     INX
     LDA $01                     ; VRAM address low byte of door
@@ -5191,9 +5137,7 @@ L_ResetDoorCmdAndLayOutDoors:
     BEQ :+
     ; Else the door is not a shutter.
     ;
-    ;
-    ; [09] door direction index
-    LDX $09
+    LDX $09                     ; [09] door direction index
     JSR SetDoorFlag
     ; Get the next room's ID.
     ;
@@ -5239,10 +5183,9 @@ L_ResetDoorCmdAndLayOutDoors:
 ; ("open", "wall", or "false"), then it would produce non-sensical
 ; values for the door face.
 ;
-;
-; If triggered door type >= 5 (keys and shutter), play door sound.
-;
 PrepareWriteHorizontalDoorTransferRecords:
+    ; If triggered door type >= 5 (keys and shutter), play door sound.
+    ;
     LDA TriggeredDoorDir
     STA $02
     JSR FindDoorTypeByDoorBit
@@ -5476,9 +5419,7 @@ WriteSquareUW:
     ; Primary is a tile used for the whole square.
     ; Primary < $70 or >= $F3.
     ;
-    ;
-    ; Write tile to (col, row).
-    STA ($00), Y
+    STA ($00), Y                ; Write tile to (col, row).
     INY
     STA ($00), Y                ; Write tile to (col, row+1).
     PHA
@@ -5937,10 +5878,9 @@ LayoutRoomOrCaveOW:
 ; means that tile object types $66 and $67 are unused.
 ; Instead, armos is represented by primary square $C0.
 ;
-;
-; Find the index X corresponding to the primary square: $E5  => 0; $EA => 5.
-;
 CheckTileObject:
+    ; Find the index X corresponding to the primary square: $E5  => 0; $EA => 5.
+    ;
     LDX #$EA
     STX $0A
     LDX #$05
@@ -5980,10 +5920,8 @@ L16AF0_Exit:
 ; [$0D]: square index
 ; [$00:01]: pointer to play area
 ;
-;
-; Get square index.
 WriteSquareOW:
-    LDX $0D
+    LDX $0D                     ; Get square index.
     CPX #$10
     BCC @WriteType3             ; If square index < $10, go handle a secondary square.
     ; Type 1 square.
@@ -6015,9 +5953,7 @@ WriteSquareOW:
     ; Square index refers to a set of 4 tile indexes in secondary squares table.
     ; Square index < $10.
     ;
-    ;
-    ; X := (square index * 4)
-    TXA
+    TXA                         ; X := (square index * 4)
     ASL
     ASL
     TAX
@@ -6457,9 +6393,7 @@ SetupObjRoomBounds:
     BNE :+                      ; If in UW, use second of bounds, and go copy them.
     ; Reset DoorwayDir and use first set of bounds.
     ;
-    ;
-    ; Offset of first set of bounds.
-    LDY #$00
+    LDY #$00                    ; Offset of first set of bounds.
     STY DoorwayDir
 :
     LDX #$00
@@ -6543,10 +6477,9 @@ ResetInvObjState:
 ; A: door type
 ; Y: whether Link is facing an increasing direction (right or down)
 ;
-;
-; If Link's direction is right or down, then 1 will be returned.
-; Else 0.
 GetPassedDoorType:
+    ; If Link's direction is right or down, then 1 will be returned.
+    ; Else 0.
     LDY #$00
     LDA ObjDir
     AND #$05
@@ -6970,7 +6903,6 @@ Link_ModifyDirAtGridPoint:
     ; Grid offset = 0, so A = 0 here.
     ; Reset some variables.
     ;
-    ;
     ; [0B] holds input direction count.
     ;
     STA $0B
@@ -7057,7 +6989,6 @@ HaveInput:
     ;
     ; Handle special cases for doors.
     ;
-    ;
     ; 1. Link at horizontal doors.
     ;
     ; If Link's X = $20 or $D0 then
@@ -7091,7 +7022,6 @@ HaveInput:
     LDX Link_GoStraightWhenDiagInput
     BEQ :+
     ; At this point, Link_GoStraightWhenDiagInput is true.
-    ;
     ;
     ; 2. Link at top door.
     ;
@@ -7417,10 +7347,8 @@ HandleWarpOW:
 ; Returns:
 ; C: 1 if cleared; 0 if already cleared
 ;
-;
-; If already cleared, then return false.
 InitSaveRam:
-    LDA SaveRamBegin
+    LDA SaveRamBegin            ; If already cleared, then return false.
     CMP #$5A
     BNE :+
     LDA SaveRamEnd
@@ -7506,15 +7434,14 @@ CalculateNoNextRoom:
 ; Params:
 ; [E7]: direction
 ;
-;
-; Map door bit/direction to an index as follows:
-; 1: 3
-; 2: 2
-; 4: 1
-; 8: 0
-;
-; Note that this is the opposite of the usual mapping.
 CalculateNextRoomForDoor:
+    ; Map door bit/direction to an index as follows:
+    ; 1: 3
+    ; 2: 2
+    ; 4: 1
+    ; 8: 0
+    ;
+    ; Note that this is the opposite of the usual mapping.
     LDA #$01
     STA $00                     ; [00] holds a single-bit mask to compare
     LDX #$03                    ; Index
@@ -7671,18 +7598,14 @@ Submenu_WriteSheetMapRowTransferRecord:
 ; Returns:
 ; A: 0 if compass of current level is missing.
 ;
-;
-; Check compasses.
 HasCompass:
-    LDX #$10
+    LDX #$10                    ; Check compasses.
     BNE :+
 ; Returns:
 ; A: 0 if map of current level is missing.
 ;
-;
-; Check maps.
 HasMap:
-    LDX #$11
+    LDX #$11                    ; Check maps.
 :
     LDA CurLevel
     BEQ @Exit                   ; If in OW, then return.
@@ -7704,10 +7627,8 @@ HasMap:
 ; Y: offset from the third element in dynamic transfer buf
 ;    to write at (between 1 and $10)
 ;
-;
-; Save dynamic transfer buf offset.
 Submenu_WriteScanningMapRoomMark:
-    TYA
+    TYA                         ; Save dynamic transfer buf offset.
     PHA
     JSR GetRoomFlags            ; Call this to load the address of level block world flags.
     LDA RoomId                  ; Save current room ID.
@@ -8077,9 +7998,7 @@ UpdateSubmenuSelection:
     STX Tune1Request
     ; Move the selection in the input direction.
     ;
-    ;
-    ; Save the input direction.
-    TAX
+    TAX                         ; Save the input direction.
     LDA SelectedItemSlot        ; Save selected item slot.
     PHA
     TXA                         ; Restore the input direction.
@@ -8087,9 +8006,7 @@ UpdateSubmenuSelection:
     ; If the new item slot = old item slot, go cancel the
     ; "selection changed" tune.
     ;
-    ;
-    ; Pop selected item slot.
-    PLA
+    PLA                         ; Pop selected item slot.
     CMP SelectedItemSlot
     BEQ @CancelTune
     ; Else the selection changed. The new slot should have an item.
@@ -8281,9 +8198,7 @@ CreateRoomObjects:
 @MakeHeartContainerOW:
     ; Try to make the heart container in OW.
     ;
-    ;
-    ; Heart container
-    LDA #$1A
+    LDA #$1A                    ; Heart container
     STA RoomItemId
     ; Load the coordinates of the heart container in
     ; OW room $5F.

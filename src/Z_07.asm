@@ -332,7 +332,7 @@
 .EXPORT WieldFlute
 
 PcmSamples:
-.INCBIN "dat/PcmSamples.dat"
+    .INCBIN "dat/PcmSamples.dat"
 
 PlayAreaColumnAddrs:
     .BYTE $30, $65, $46, $65, $5C, $65, $72, $65

@@ -200,34 +200,34 @@ TransferPatternBlock_Bank3:
     RTS
 
 PatternBlockUWBG:
-.INCBIN "dat/PatternBlockUWBG.dat"
+    .INCBIN "dat/PatternBlockUWBG.dat"
 
 PatternBlockOWBG:
-.INCBIN "dat/PatternBlockOWBG.dat"
+    .INCBIN "dat/PatternBlockOWBG.dat"
 
 PatternBlockOWSP:
-.INCBIN "dat/PatternBlockOWSP.dat"
+    .INCBIN "dat/PatternBlockOWSP.dat"
 
 PatternBlockUWSP358:
-.INCBIN "dat/PatternBlockUWSP358.dat"
+    .INCBIN "dat/PatternBlockUWSP358.dat"
 
 PatternBlockUWSP469:
-.INCBIN "dat/PatternBlockUWSP469.dat"
+    .INCBIN "dat/PatternBlockUWSP469.dat"
 
 PatternBlockUWSP:
-.INCBIN "dat/PatternBlockUWSP.dat"
+    .INCBIN "dat/PatternBlockUWSP.dat"
 
 PatternBlockUWSP127:
-.INCBIN "dat/PatternBlockUWSP127.dat"
+    .INCBIN "dat/PatternBlockUWSP127.dat"
 
 PatternBlockUWSPBoss1257:
-.INCBIN "dat/PatternBlockUWSPBoss1257.dat"
+    .INCBIN "dat/PatternBlockUWSPBoss1257.dat"
 
 PatternBlockUWSPBoss3468:
-.INCBIN "dat/PatternBlockUWSPBoss3468.dat"
+    .INCBIN "dat/PatternBlockUWSPBoss3468.dat"
 
 PatternBlockUWSPBoss9:
-.INCBIN "dat/PatternBlockUWSPBoss9.dat"
+    .INCBIN "dat/PatternBlockUWSPBoss9.dat"
 
 
 .SEGMENT "BANK_03_ISR"

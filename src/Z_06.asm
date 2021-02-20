@@ -386,49 +386,49 @@ LevelInfoUWQ2ReplacementSizes:
     .BYTE $FF
 
 LevelBlockOW:
-.INCBIN "dat/LevelBlockOW.dat"
+    .INCBIN "dat/LevelBlockOW.dat"
 
 LevelBlockUW1Q1:
-.INCBIN "dat/LevelBlockUW1Q1.dat"
+    .INCBIN "dat/LevelBlockUW1Q1.dat"
 
 LevelBlockUW2Q1:
-.INCBIN "dat/LevelBlockUW2Q1.dat"
+    .INCBIN "dat/LevelBlockUW2Q1.dat"
 
 LevelBlockUW1Q2:
-.INCBIN "dat/LevelBlockUW1Q2.dat"
+    .INCBIN "dat/LevelBlockUW1Q2.dat"
 
 LevelBlockUW2Q2:
-.INCBIN "dat/LevelBlockUW2Q2.dat"
+    .INCBIN "dat/LevelBlockUW2Q2.dat"
 
 LevelInfoOW:
-.INCBIN "dat/LevelInfoOW.dat"
+    .INCBIN "dat/LevelInfoOW.dat"
 
 LevelInfoUW1:
-.INCBIN "dat/LevelInfoUW1.dat"
+    .INCBIN "dat/LevelInfoUW1.dat"
 
 LevelInfoUW2:
-.INCBIN "dat/LevelInfoUW2.dat"
+    .INCBIN "dat/LevelInfoUW2.dat"
 
 LevelInfoUW3:
-.INCBIN "dat/LevelInfoUW3.dat"
+    .INCBIN "dat/LevelInfoUW3.dat"
 
 LevelInfoUW4:
-.INCBIN "dat/LevelInfoUW4.dat"
+    .INCBIN "dat/LevelInfoUW4.dat"
 
 LevelInfoUW5:
-.INCBIN "dat/LevelInfoUW5.dat"
+    .INCBIN "dat/LevelInfoUW5.dat"
 
 LevelInfoUW6:
-.INCBIN "dat/LevelInfoUW6.dat"
+    .INCBIN "dat/LevelInfoUW6.dat"
 
 LevelInfoUW7:
-.INCBIN "dat/LevelInfoUW7.dat"
+    .INCBIN "dat/LevelInfoUW7.dat"
 
 LevelInfoUW8:
-.INCBIN "dat/LevelInfoUW8.dat"
+    .INCBIN "dat/LevelInfoUW8.dat"
 
 LevelInfoUW9:
-.INCBIN "dat/LevelInfoUW9.dat"
+    .INCBIN "dat/LevelInfoUW9.dat"
 
 CommonDataBlock_Bank6:
 
@@ -833,10 +833,10 @@ Mode11PlayAreaAttrsBottomHalfTransferBuf:
     .BYTE $23, $E8, $58, $FF, $FF
 
 StoryTileAttrTransferBuf:
-.INCBIN "dat/StoryTileAttrTransferBuf.dat"
+    .INCBIN "dat/StoryTileAttrTransferBuf.dat"
 
 GameTitleTransferBuf:
-.INCBIN "dat/GameTitleTransferBuf.dat"
+    .INCBIN "dat/GameTitleTransferBuf.dat"
 
 
 .SEGMENT "BANK_06_ISR"

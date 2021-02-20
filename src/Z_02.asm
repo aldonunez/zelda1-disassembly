@@ -144,13 +144,13 @@ TransferPatternBlock_Bank2:
     RTS
 
 CommonSpritePatterns:
-.INCBIN "dat/CommonSpritePatterns.dat"
+    .INCBIN "dat/CommonSpritePatterns.dat"
 
 CommonBackgroundPatterns:
-.INCBIN "dat/CommonBackgroundPatterns.dat"
+    .INCBIN "dat/CommonBackgroundPatterns.dat"
 
 CommonMiscPatterns:
-.INCBIN "dat/CommonMiscPatterns.dat"
+    .INCBIN "dat/CommonMiscPatterns.dat"
 
 ; Unknown block
     .BYTE $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
@@ -415,10 +415,10 @@ DemoStoryFinalSpriteAttrs:
     .BYTE $00, $00, $00, $00, $00, $40, $00, $00
 
 DemoTextFields:
-.INCBIN "dat/DemoTextFields.dat"
+    .INCBIN "dat/DemoTextFields.dat"
 
 DemoLineTextAddrs:
-.INCLUDE "dat/DemoLineTextAddrs.inc"
+    .INCLUDE "dat/DemoLineTextAddrs.inc"
 
 InitDemoSubphaseClearArtifacts:
     JSR TurnOffVideoAndClearArtifacts
@@ -3595,13 +3595,13 @@ CreditsPagesTextMasks:
     .BYTE $03, $25, $05, $40
 
 CreditsTextAddrsLo:
-.INCLUDE "dat/CreditsTextAddrsLo.inc"
+    .INCLUDE "dat/CreditsTextAddrsLo.inc"
 
 CreditsTextAddrsHi:
-.INCLUDE "dat/CreditsTextAddrsHi.inc"
+    .INCLUDE "dat/CreditsTextAddrsHi.inc"
 
 CreditsTextLines:
-.INCBIN "dat/CreditsTextLines.dat"
+    .INCBIN "dat/CreditsTextLines.dat"
 
 CreditsAttrs:
     .BYTE $00, $AA, $FF, $FF, $55, $AA, $AA, $FF

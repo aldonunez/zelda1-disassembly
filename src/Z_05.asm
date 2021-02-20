@@ -1450,10 +1450,10 @@ EnteringRoomRelativePositions:
     .BYTE $18, $E8, $28, $D8
 
 ObjLists:
-.INCBIN "dat/ObjLists.dat"
+    .INCBIN "dat/ObjLists.dat"
 
 ObjListAddrs:
-.INCLUDE "dat/ObjListAddrs.inc"
+    .INCLUDE "dat/ObjListAddrs.inc"
 
 InitMode4:
     LDX GameSubmode
@@ -4224,7 +4224,7 @@ WriteDoorFaceTileHorizontally:
     RTS
 
 RoomLayoutsOW:
-.INCBIN "dat/RoomLayoutsOW.dat"
+    .INCBIN "dat/RoomLayoutsOW.dat"
 
 RoomLayoutOWCave0:
     .BYTE $00, $00, $95, $95, $95, $95, $95, $C2
@@ -4462,7 +4462,7 @@ DoorFaceTilesN:
     .BYTE $24, $F5, $DC, $DC
 
 RoomLayoutsUW:
-.INCBIN "dat/RoomLayoutsUW.dat"
+    .INCBIN "dat/RoomLayoutsUW.dat"
 
 ColumnHeapUW0:
     .BYTE $E1, $80, $C1, $00, $01, $A0, $04, $A0

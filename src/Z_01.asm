@@ -49,10 +49,10 @@
 .EXPORT UpdateWhirlwind_Full
 
 PersonTextAddrs:
-.INCLUDE "dat/PersonTextAddrs.inc"
+    .INCLUDE "dat/PersonTextAddrs.inc"
 
 PersonText:
-.INCBIN "dat/PersonText.dat"
+    .INCBIN "dat/PersonText.dat"
 
 OverworldPersonTextSelectors:
     .BYTE $40, $60, $42, $42, $04, $06, $48, $0A
@@ -1699,10 +1699,10 @@ TransferPatternBlock_Bank1:
     RTS
 
 DemoSpritePatterns:
-.INCBIN "dat/DemoSpritePatterns.dat"
+    .INCBIN "dat/DemoSpritePatterns.dat"
 
 DemoBackgroundPatterns:
-.INCBIN "dat/DemoBackgroundPatterns.dat"
+    .INCBIN "dat/DemoBackgroundPatterns.dat"
 
 ; Unknown block
     .BYTE $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF

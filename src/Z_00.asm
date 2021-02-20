@@ -76,31 +76,31 @@ SongHeaderZelda:
     .BYTE $10, $C4, $97, $3F, $20, $00, $80, $80
 
 SongScriptItemTaken0:
-.INCBIN "dat/SongScriptItemTaken0.dat"
+    .INCBIN "dat/SongScriptItemTaken0.dat"
 
 SongScriptOverworld0:
-.INCBIN "dat/SongScriptOverworld0.dat"
+    .INCBIN "dat/SongScriptOverworld0.dat"
 
 SongScriptUnderworld0:
-.INCBIN "dat/SongScriptUnderworld0.dat"
+    .INCBIN "dat/SongScriptUnderworld0.dat"
 
 SongScriptEndLevel0:
-.INCBIN "dat/SongScriptEndLevel0.dat"
+    .INCBIN "dat/SongScriptEndLevel0.dat"
 
 SongScriptLastLevel0:
-.INCBIN "dat/SongScriptLastLevel0.dat"
+    .INCBIN "dat/SongScriptLastLevel0.dat"
 
 SongScriptGanon0:
-.INCBIN "dat/SongScriptGanon0.dat"
+    .INCBIN "dat/SongScriptGanon0.dat"
 
 SongScriptEnding0:
-.INCBIN "dat/SongScriptEnding0.dat"
+    .INCBIN "dat/SongScriptEnding0.dat"
 
 SongScriptDemo0:
-.INCBIN "dat/SongScriptDemo0.dat"
+    .INCBIN "dat/SongScriptDemo0.dat"
 
 SongScriptZelda0:
-.INCBIN "dat/SongScriptZelda0.dat"
+    .INCBIN "dat/SongScriptZelda0.dat"
 
 DriveAudio:
     ; If the game is paused, then silence all channels

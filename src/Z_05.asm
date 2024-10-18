@@ -43,6 +43,10 @@
 .IMPORT WieldCandle
 .IMPORT WriteBlankPrioritySprites
 
+; Imports from program bank 02
+
+.IMPORT LBF98
+
 ; Imports from RAM code bank 06
 
 .IMPORT ColumnDirectoryOW
@@ -8290,15 +8294,40 @@ CreateRoomObjects:
 
 
 ; Unknown block
-    .BYTE $78, $D8, $A9, $00, $8D, $00, $20, $A2
-    .BYTE $FF, $9A, $AD, $02, $20, $29, $80, $F0
-    .BYTE $F9, $AD, $02, $20, $29, $80, $F0, $F9
-    .BYTE $09, $FF, $8D, $00, $80, $8D, $00, $A0
-    .BYTE $8D, $00, $C0, $8D, $00, $E0, $A9, $0F
-    .BYTE $20, $98, $BF, $A9, $00, $8D, $00, $A0
-    .BYTE $4A, $8D, $00, $A0, $4A, $8D, $00, $A0
-    .BYTE $4A, $8D, $00, $A0, $4A, $8D, $00, $A0
-    .BYTE $A9, $07, $20, $AC, $BF, $4C, $40, $E4
+LBFAC           := $BFAC
+LE440           := $E440
+        sei
+        cld
+        lda     #$00
+        sta     $2000
+        ldx     #$FF
+        txs
+LFFC2:  lda     $2002
+        and     #$80
+        beq     LFFC2
+LFFC9:  lda     $2002
+        and     #$80
+        beq     LFFC9
+        ora     #$FF
+        sta     $8000
+        sta     $A000
+        sta     $C000
+        sta     $E000
+        lda     #$0F
+        jsr     LBF98
+        lda     #$00
+        sta     $A000
+        lsr     a
+        sta     $A000
+        lsr     a
+        sta     $A000
+        lsr     a
+        sta     $A000
+        lsr     a
+        sta     $A000
+        lda     #$07
+        jsr     LBFAC
+        jmp     LE440
 
 SetMMC1Control_Local5:
     STA $8000

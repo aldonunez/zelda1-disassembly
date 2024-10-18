@@ -2,6 +2,9 @@
 
 .SEGMENT "BANK_06_00"
 
+; Imports from program bank 07
+
+.IMPORT LBF98
 
 ; Imports from program bank 07
 
@@ -850,20 +853,62 @@ GameTitleTransferBuf:
 
 
 ; Unknown block
-    .BYTE $78, $D8, $A9, $00, $8D, $00, $20, $A2
-    .BYTE $FF, $9A, $AD, $02, $20, $29, $80, $F0
-    .BYTE $F9, $AD, $02, $20, $29, $80, $F0, $F9
-    .BYTE $09, $FF, $8D, $00, $80, $8D, $00, $A0
-    .BYTE $8D, $00, $C0, $8D, $00, $E0, $A9, $0F
-    .BYTE $20, $98, $BF, $A9, $00, $8D, $00, $A0
-    .BYTE $4A, $8D, $00, $A0, $4A, $8D, $00, $A0
-    .BYTE $4A, $8D, $00, $A0, $4A, $8D, $00, $A0
-    .BYTE $A9, $07, $20, $AC, $BF, $4C, $40, $E4
-    .BYTE $8D, $00, $80, $4A, $8D, $00, $80, $4A
-    .BYTE $8D, $00, $80, $4A, $8D, $00, $80, $4A
-    .BYTE $8D, $00, $80, $60, $8D, $00, $E0, $4A
-    .BYTE $8D, $00, $E0, $4A, $8D, $00, $E0, $4A
-    .BYTE $8D, $00, $E0, $4A, $8D, $00, $E0, $60
+LBFAC           := $BFAC
+LE440           := $E440
+        sei
+        cld
+        lda     #$00
+        sta     $2000
+        ldx     #$FF
+        txs
+LFF9A:  lda     $2002
+        and     #$80
+        beq     LFF9A
+LFFA1:  lda     $2002
+        and     #$80
+        beq     LFFA1
+        ora     #$FF
+        sta     $8000
+        sta     $A000
+        sta     $C000
+        sta     $E000
+        lda     #$0F
+        jsr     LBF98
+        lda     #$00
+        sta     $A000
+        lsr     a
+        sta     $A000
+        lsr     a
+        sta     $A000
+        lsr     a
+        sta     $A000
+        lsr     a
+        sta     $A000
+        lda     #$07
+        jsr     LBFAC
+        jmp     LE440
+
+        sta     $8000
+        lsr     a
+        sta     $8000
+        lsr     a
+        sta     $8000
+        lsr     a
+        sta     $8000
+        lsr     a
+        sta     $8000
+        rts
+
+        sta     $E000
+        lsr     a
+        sta     $E000
+        lsr     a
+        sta     $E000
+        lsr     a
+        sta     $E000
+        lsr     a
+        sta     $E000
+        rts
 
 .SEGMENT "BANK_06_VEC"
 

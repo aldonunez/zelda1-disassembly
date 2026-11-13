@@ -1,0 +1,44 @@
+
+name: Experimental Europe Rev 1 Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - experiment/europe-rev1
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download source
+        uses: actions/checkout@v4
+
+      - name: Install cc65
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cc65
+
+      - name: Check ROM configuration
+        run: |
+          echo "Checking project structure..."
+          test -f src/bins.xml
+          test -f src/Z.cfg
+          test -f build.ps1
+          echo "Source files found."
+
+      - name: Check assembler
+        run: |
+          ca65 --version
+          ld65 --version
+
+      - name: Report build status
+        run: |
+          echo "Environment prepared."
+          echo "A verified Europe Rev 1 ROM build still requires"
+          echo "the correct ROM input and binary extraction."
+          
